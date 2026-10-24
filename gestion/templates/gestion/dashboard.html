@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventaria - Mi Cuenta</title>
+    <style>
+        body { background-color: #8ce6e6; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: Arial, sans-serif; }
+        .contenedor-escritorio { background-color: white; padding: 60px 100px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; gap: 30px; width: 60%; max-width: 800px; }
+        h2 { color: #333; font-size: 3rem; margin: 0; }
+        .btn-oval { background-color: #f6c09d; color: #333; padding: 20px 60px; border-radius: 50px; text-decoration: none; font-size: 1.8rem; border: none; font-weight: bold; cursor: pointer; transition: transform 0.2s; width: 70%; text-align: center; }
+        .btn-oval:hover { transform: scale(1.05); }
+        .btn-volver { background-color: #ccc; padding: 10px 40px; font-size: 1.2rem; margin-top: 20px; width: auto; }
+    </style>
+</head>
+<body>
+    <div class="contenedor-escritorio">
+        <h2>Mi Cuenta PYME</h2>
+        <a href="{% url 'menu' %}" class="btn-oval">Productos</a>
+        <a href="#" class="btn-oval">Ventas</a>
+        <a href="#" class="btn-oval">Stock</a>
+        
+        <a href="{% url 'inicio' %}" class="btn-oval btn-volver">Cerrar sesión / Volver al inicio</a>
+    </div>
+</body>
+</html>

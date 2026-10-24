@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventaria - Inicio de Sesión</title>
+    <style>
+        body { background-color: #8ce6e6; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: Arial, sans-serif; }
+        .contenedor-escritorio { background-color: white; padding: 60px 100px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; gap: 25px; width: 60%; max-width: 800px; }
+        h1 { color: #333; font-size: 4rem; margin: 0; margin-bottom: 20px; }
+        .input-oval { border: 2px solid #ddd; border-radius: 50px; padding: 15px 30px; font-size: 1.2rem; width: 80%; outline: none; }
+        .btn-oval { background-color: #f6c09d; color: #333; padding: 15px 60px; border-radius: 50px; text-decoration: none; font-size: 1.5rem; border: none; font-weight: bold; cursor: pointer; transition: transform 0.2s; text-align: center; }
+        .btn-oval:hover { transform: scale(1.05); }
+        .btn-secundario { background-color: #eee; font-size: 1.2rem; padding: 10px 40px; }
+    </style>
+</head>
+<body>
+    <div class="contenedor-escritorio">
+        <h1>Inventaria</h1>
+        <input type="text" class="input-oval" placeholder="Usuario o Correo">
+        <input type="password" class="input-oval" placeholder="Contraseña">
+        
+        <a href="{% url 'dashboard' %}" class="btn-oval">Iniciar sesión</a>
+        <p style="margin: 10px 0 0 0; color: #666;">¿No tienes cuenta?</p>
+        <a href="{% url 'registro' %}" class="btn-oval btn-secundario">Registrarse</a>
+    </div>
+</body>
+</html>

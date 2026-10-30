@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventaria - Módulo de Ventas</title>
+    <style>
+        body { background-color: #8ce6e6; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; font-family: Arial, sans-serif; }
+        .contenedor-principal { background-color: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; gap: 40px; width: 90%; max-width: 1200px; }
+        
+        /* Columna Izquierda */
+        .columna-izquierda { flex: 1; display: flex; flex-direction: column; gap: 25px; }
+        .caja-input { border: 3px solid #333; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px; background: #fff; }
+        .caja-input label { font-weight: bold; color: #333; font-size: 1.1rem; }
+        .caja-input input { border: 2px solid #ddd; border-radius: 8px; padding: 12px; font-size: 1.2rem; outline: none; }
+        
+        .contenedor-botones { display: flex; gap: 15px; }
+        .btn-accion { flex: 1; padding: 15px; border-radius: 10px; font-size: 1.2rem; font-weight: bold; border: 3px solid #333; cursor: pointer; text-align: center; text-decoration: none; background-color: #f6c09d; color: #333; transition: transform 0.2s; }
+        .btn-borrar { background-color: #ff9999; }
+        .btn-accion:hover { transform: scale(1.03); }
+
+        /* Columna Derecha */
+        .columna-derecha { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+        .tabla-ventas-container { border: 3px solid #333; border-radius: 12px; height: 350px; overflow-y: auto; padding: 15px; background: #fff; }
+        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 1.1rem; }
+        th { background-color: #f6c09d; padding: 12px; border: 1px solid #333; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+
+        .caja-ganancias { border: 3px solid #333; border-radius: 12px; padding: 20px; text-align: center; font-size: 1.5rem; font-weight: bold; background-color: #fdfdfd; }
+        
+        .btn-volver { background-color: #ccc; border: 2px solid #333; padding: 10px 25px; border-radius: 50px; text-decoration: none; color: #333; font-weight: bold; align-self: flex-start; }
+    </style>
+</head>
+<body>
+    <div class="contenedor-principal">
+        
+        <!-- Columna Izquierda: Controles de Venta -->
+        <form method="POST" class="columna-izquierda">
+            {% csrf_token %}
+            <h2>Módulo de Ventas</h2>
+
+            {% if mensaje_error %}
+                <div style="color: #e74c3c; font-weight: bold; background: #fadbd8; padding: 10px; border-radius: 8px;">{{ mensaje_error }}</div>
+            {% endif %}
+            {% if mensaje_exito %}
+                <div style="color: #27ae60; font-weight: bold; background: #d4efdf; padding: 10px; border-radius: 8px;">{{ mensaje_exito }}</div>
+            {% endif %}
+
+            <div class="caja-input">
+                <label>BUSCADOR DE PRODUCTO AL CUAL SE LE VA A SUSTRAER SU CANTIDAD</label>
+                <input type="text" name="q" placeholder="Ej. Manzanas..." value="{{ request.POST.q }}">
+            </div>
+
+            <div class="caja-input">
+                <label>CANTIDAD A SUSTRAER DEL PRODUCTO</label>
+                <input type="number" name="cantidad" min="1" placeholder="Ej. 15" value="{{ request.POST.cantidad }}">
+            </div>
+
+            <div class="contenedor-botones">
+                <button type="submit" name="accion" value="borrar" class="btn-accion btn-borrar">BORRAR</button>
+                <button type="submit" name="accion" value="confirmar" class="btn-accion">CONFIRMAR</button>
+            </div>
+
+            <a href="{% url 'dashboard' %}" class="btn-volver">Volver al Dashboard</a>
+        </form>
+
+        <!-- Columna Derecha: Tabla y Ganancias -->
+        <div class="columna-derecha">
+            <div class="tabla-ventas-container">
+                <h3 style="margin-top: 0; text-align: center;">VENTAS</h3>
+                <table>
+                    <tr>
+                        <th>PRODUCTO</th>
+                        <th>CANTIDAD</th>
+                        <th>PRECIO</th>
+                    </tr>
+                    {% for venta in ventas %}
+                    <tr>
+                        <td>{{ venta.nombre }}</td>
+                        <td>{{ venta.cantidad }}</td>
+                        <td>${{ venta.precio_venta }}</td>
+                    </tr>
+                    {% empty}
+                    <tr>
+                        <td colspan="3" style="color: #888; padding: 30px;">Aún no se han registrado ventas.</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <div class="caja-ganancias">
+                GANANCIAS: ${{ ganancias_totales }}
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -3,68 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventaria - Menú Principal</title>
+    <title>Inventaria - Productos</title>
     <style>
-        body {
-            background-color: #8ce6e6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-        .contenedor-escritorio {
-            background-color: white;
-            padding: 60px 100px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 40px;
-            width: 70%;
-            max-width: 1000px;
-        }
-        .buscador-container {
-            display: flex;
-            gap: 15px;
-            width: 100%;
-            justify-content: center;
-        }
-        .input-oval {
-            border: 2px solid #ddd;
-            border-radius: 50px;
-            padding: 15px 30px;
-            font-size: 1.5rem;
-            width: 70%;
-            outline: none;
-        }
-        .btn-oval {
-            background-color: #f6c09d;
-            color: #333;
-            padding: 15px 40px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-size: 1.5rem;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .btn-oval:hover {
-            transform: scale(1.05);
-        }
+        body { background-color: #8ce6e6; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: Arial, sans-serif; }
+        .contenedor-escritorio { background-color: white; padding: 60px 100px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; gap: 40px; width: 70%; max-width: 1000px; }
+        .buscador-container { display: flex; gap: 15px; width: 100%; justify-content: center; }
+        .input-oval { border: 2px solid #ddd; border-radius: 50px; padding: 15px 30px; font-size: 1.5rem; width: 70%; outline: none; }
+        .btn-oval { background-color: #f6c09d; color: #333; padding: 15px 40px; border-radius: 50px; text-decoration: none; font-size: 1.5rem; border: none; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
+        .btn-oval:hover { transform: scale(1.05); }
     </style>
 </head>
 <body>
     <div class="contenedor-escritorio">
-        <div class="buscador-container">
-            <input type="text" class="input-oval" placeholder="Buscar producto...">
-            <button class="btn-oval">Buscar</button>
+        <form method="GET" action="{% url 'menu' %}" class="buscador-container">
+            <input type="text" name="q" class="input-oval" placeholder="Buscar producto..." value="{{ query }}">
+            <button type="submit" class="btn-oval">Buscar</button>
+        </form>
+
+        {% if mensaje_error %}
+            <p style="color: #e74c3c; font-size: 1.5rem; font-weight: bold; margin: 0;">{{ mensaje_error }}</p>
+        {% endif %}
+
+        {% if resultados %}
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px; text-align: center; font-size: 1.2rem;">
+                <tr style="background-color: #f6c09d; border-radius: 10px;">
+                    <th style="padding: 15px;">Producto</th>
+                    <th style="padding: 15px;">Stock</th>
+                    <th style="padding: 15px;">Precio</th>
+                </tr>
+                {% for producto in resultados %}
+                <tr style="border-bottom: 2px solid #ddd;">
+                    <td style="padding: 15px;">{{ producto.nombre }}</td>
+                    <td style="padding: 15px;">{{ producto.stock }} unidades</td>
+                    <td style="padding: 15px;">${{ producto.precio }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
+
+        <div style="display: flex; gap: 20px; margin-top: 20px;">
+            <a href="#" class="btn-oval">Crear producto nuevo</a>
+            <a href="{% url 'inicio' %}" class="btn-oval" style="background-color: #ccc;">Volver al inicio</a>
         </div>
-        <a href="#" class="btn-oval" style="margin-top: 20px;">Crear producto nuevo</a>
-        <a href="{% url 'inicio' %}" class="btn-oval" style="background-color: #ccc; padding: 10px 40px; font-size: 1.2rem; margin-top: 20px;">Volver al inicio</a>
     </div>
 </body>
 </html>

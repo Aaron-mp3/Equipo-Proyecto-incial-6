@@ -6,7 +6,7 @@
     <title>Inventaria - Listado de Stock</title>
     <style>
         body {
-            background-color: #8ce6e6;
+            background-color: #15233E;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -27,7 +27,7 @@
             max-width: 900px;
         }
         h2 {
-            color: #333;
+            color: #15233E;
             margin: 0;
             font-size: 2rem;
             text-transform: uppercase;
@@ -40,21 +40,21 @@
             font-size: 1.2rem;
         }
         th {
-            background-color: #f6c09d;
+            background-color: #C9AB63;
             padding: 15px;
-            color: #333;
+            color: #15233E;
             font-weight: bold;
         }
         td {
             padding: 15px;
-            border-bottom: 2px solid #ddd;
+            border-bottom: 2px solid #DDE3EC;
         }
         tr:hover {
-            background-color: #f9f9f9;
+            background-color: #F2F5FA;
         }
         .btn-oval {
-            background-color: #ccc;
-            color: #333;
+            background-color: #D5DBE5;
+            color: #15233E;
             padding: 12px 30px;
             border-radius: 50px;
             text-decoration: none;
@@ -83,7 +83,7 @@
                 <td style="font-weight: bold; text-align: left; padding-left: 30px;">{{ producto.nombre }}</td>
                 <td>{{ producto.stock }} unds.</td>
                 <td>${{ producto.precio }}</td>
-                <td style="font-weight: bold; color: #27ae60;">${{ producto.precio_salida }}</td>
+                <td style="font-weight: bold; color: #3E9B5F;">${{ producto.precio_salida }}</td>
             </tr>
             {% endfor %}
         </table>

@@ -16,12 +16,16 @@
 </head>
 <body>
     <div class="contenedor-escritorio">
-        <h2>Crear Cuenta</h2>
-        <input type="text" class="input-oval" placeholder="Nombre de la PYME">
-        <input type="email" class="input-oval" placeholder="Correo electrónico">
-        <input type="password" class="input-oval" placeholder="Contraseña">
-        
-        <a href="{% url 'inicio' %}" class="btn-oval">Registrar datos</a>
+        <form action="{% url 'registro' %}" method="POST" style="display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%;">
+            {% csrf_token %}
+            <h2>Crear Cuenta</h2>
+            
+            <input type="text" name="nombre_pyme" class="input-oval" placeholder="Nombre de la PYME" required>
+            <input type="email" name="correo" class="input-oval" placeholder="Correo electrónico" required>
+            <input type="password" name="contrasena" class="input-oval" placeholder="Contraseña" required>
+            
+            <button type="submit" class="btn-oval">Registrar datos</button>
+        </form>
         <a href="{% url 'inicio' %}" class="btn-oval btn-volver">Volver al inicio</a>
     </div>
 </body>

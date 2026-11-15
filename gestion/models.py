@@ -18,3 +18,11 @@ class Producto(models.Model):
 
     def __str__(self):
         return self.nombre
+
+class PerfilPyme(models.Model):
+    nombre_pyme = models.CharField(max_length=100)
+    correo = models.EmailField(unique=True)
+    contrasena = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.nombre_pyme

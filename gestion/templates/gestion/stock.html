@@ -1,100 +1,67 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventaria - Listado de Stock</title>
-    <style>
-        body {
-            background-color: #15233E;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-        .contenedor-escritorio {
-            background-color: white;
-            padding: 40px 60px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 30px;
-            width: 80%;
-            max-width: 900px;
-        }
-        h2 {
-            color: #15233E;
-            margin: 0;
-            font-size: 2rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: center;
-            font-size: 1.2rem;
-        }
-        th {
-            background-color: #C9AB63;
-            padding: 15px;
-            color: #15233E;
-            font-weight: bold;
-        }
-        td {
-            padding: 15px;
-            border-bottom: 2px solid #DDE3EC;
-        }
-        tr:hover {
-            background-color: #F2F5FA;
-        }
-        .btn-oval {
-            background-color: #D5DBE5;
-            color: #15233E;
-            padding: 12px 30px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-size: 1.2rem;
-            font-weight: bold;
-            transition: transform 0.2s;
-        }
-        .btn-oval:hover {
-            transform: scale(1.05);
-        }
-    </style>
-</head>
-<body>
-    <div class="contenedor-escritorio">
-        <h2>Listado General de Stock</h2>
+{% extends 'gestion/base.html' %}
 
-        <table>
-            <tr>
-                <th style="border-top-left-radius: 10px; border-bottom-left-radius: 10px;">Producto</th>
-                <th>Cantidad</th>
-                <th>Precio Compra</th>
-                <th style="border-top-right-radius: 10px; border-bottom-right-radius: 10px;">Precio de Venta</th>
-            </tr>
-            {% for producto in resultados %}
-            <tr>
-                <td style="font-weight: bold; text-align: left; padding-left: 30px;">{{ producto.nombre }}</td>
-                <td>{{ producto.cantidad_actual }} unds.</td>
-                <td>${{ producto.precio_costo }}</td>
-                <td style="font-weight: bold; color: #3E9B5F;">${{ producto.precio_venta }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4" style="color: #6B7790; padding: 30px;">Aún no tienes productos registrados.</td>
-            </tr>
-            {% endfor %}
-        </table>
+{% block titulo %}Inventaria - Stock{% endblock %}
 
-        <div style="display: flex; gap: 20px; margin-top: 10px;">
-            <a href="{% url 'dashboard' %}" class="btn-oval">Volver al Dashboard</a>
+{% block contenido %}
+{% include 'gestion/_barra.html' %}
+
+<main class="panel">
+    <div class="contenedor">
+        <div class="encabezado-seccion">
+            <div>
+                <h2>Stock</h2>
+                <p class="subtitulo">Unidades disponibles y precios de cada producto.</p>
+            </div>
+            <a href="{% url 'crear_producto' %}" class="btn">+ Crear producto</a>
+        </div>
+
+        {% for mensaje in messages %}
+            <div class="mensaje-exito">{{ mensaje }}</div>
+        {% endfor %}
+
+        <div class="tabla-wrap">
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio de compra</th>
+                        <th>Precio de venta</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto in resultados %}
+                    <tr>
+                        <td class="nombre">{{ producto.nombre }}</td>
+                        <td>{{ producto.cantidad_actual }} unds.</td>
+                        <td>${{ producto.precio_costo }}</td>
+                        <td class="venta">${{ producto.precio_venta }}</td>
+                        <td>
+                            {% if producto.cantidad_actual <= umbral %}
+                                <span class="insignia insignia-bajo" style="margin-left: 0;">Stock bajo</span>
+                            {% else %}
+                                <span class="insignia insignia-ok" style="margin-left: 0;">Stock normal</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'editar_producto' producto.id %}?volver=stock" class="btn btn-borde btn-chico">Editar</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="tabla-vacia">Aún no tienes productos registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="leyenda">Se marca "Stock bajo" cuando quedan {{ umbral }} unidades o menos.</p>
+
+        <div class="pie-botones">
+            <a href="{% url 'dashboard' %}" class="btn btn-borde">Volver al dashboard</a>
         </div>
     </div>
-</body>
-</html>
+</main>
+{% endblock %}

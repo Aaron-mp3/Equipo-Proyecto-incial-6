@@ -1,0 +1,101 @@
+{% extends 'gestion/base.html' %}
+
+{% block titulo %}Inventaria - Mi perfil{% endblock %}
+
+{% block contenido %}
+{% include 'gestion/_barra.html' %}
+
+<main class="panel">
+    <div class="contenedor">
+        <div class="perfil-cabecera">
+            <div class="avatar-grande-caja">{% include 'gestion/_avatar.html' %}</div>
+            <div>
+                <h2>Mi perfil</h2>
+                <p class="subtitulo">{{ pyme.nombre_pyme }} · {{ pyme.correo }}</p>
+            </div>
+        </div>
+
+        {% for mensaje in messages %}
+            <div class="mensaje-exito">{{ mensaje }}</div>
+        {% endfor %}
+
+        <div class="perfil-grid">
+
+            <section class="perfil-bloque">
+                <h3>Datos de la cuenta</h3>
+                {% if errores.datos %}<div class="mensaje-error">{{ errores.datos }}</div>{% endif %}
+                <form method="POST" action="{% url 'perfil' %}" class="formulario">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="datos">
+
+                    <label for="nombre_pyme">Nombre de la PYME</label>
+                    <input type="text" id="nombre_pyme" name="nombre_pyme" maxlength="100" value="{{ datos.nombre_pyme }}" required>
+
+                    <label for="correo">Correo electrónico</label>
+                    <input type="email" id="correo" name="correo" value="{{ datos.correo }}" autocomplete="username" required>
+
+                    <label for="contrasena_actual_datos">Contraseña actual</label>
+                    <input type="password" id="contrasena_actual_datos" name="contrasena_actual" autocomplete="current-password" placeholder="Solo si cambias el correo">
+                    <p class="ayuda">Por seguridad, para cambiar el correo debes confirmar tu contraseña.</p>
+
+                    <button type="submit" class="btn">Guardar datos</button>
+                </form>
+            </section>
+
+            <section class="perfil-bloque">
+                <h3>Foto de perfil</h3>
+                {% if errores.foto %}<div class="mensaje-error">{{ errores.foto }}</div>{% endif %}
+                <form method="POST" action="{% url 'perfil' %}" enctype="multipart/form-data" class="formulario">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="foto">
+
+                    <label for="foto">Elige una imagen</label>
+                    <input type="file" id="foto" name="foto" accept="image/png,image/jpeg,image/gif,image/webp" required>
+                    <p class="ayuda">JPG, PNG, GIF o WEBP. Máximo 2 MB.</p>
+
+                    <button type="submit" class="btn">Subir foto</button>
+                </form>
+                {% if pyme.foto %}
+                <form method="POST" action="{% url 'perfil' %}" class="formulario" style="margin-top: 12px;"
+                      onsubmit="return confirm('¿Quitar tu foto de perfil?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="quitar_foto">
+                    <button type="submit" class="btn btn-borde">Quitar foto actual</button>
+                </form>
+                {% endif %}
+            </section>
+
+            <section class="perfil-bloque ancho">
+                <h3>Cambiar contraseña</h3>
+                {% if errores.contrasena %}<div class="mensaje-error">{{ errores.contrasena }}</div>{% endif %}
+                <form method="POST" action="{% url 'perfil' %}" class="formulario">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="contrasena">
+
+                    <label for="contrasena_actual">Contraseña actual</label>
+                    <input type="password" id="contrasena_actual" name="contrasena_actual" autocomplete="current-password" required>
+
+                    <div class="fila">
+                        <div>
+                            <label for="contrasena_nueva">Nueva contraseña</label>
+                            <input type="password" id="contrasena_nueva" name="contrasena_nueva" autocomplete="new-password" required>
+                        </div>
+                        <div>
+                            <label for="contrasena_repetida">Repite la nueva contraseña</label>
+                            <input type="password" id="contrasena_repetida" name="contrasena_repetida" autocomplete="new-password" required>
+                        </div>
+                    </div>
+                    <p class="ayuda">Mínimo 8 caracteres, que no sea demasiado común ni solo números. Al cambiarla, se cierran tus otras sesiones abiertas.</p>
+
+                    <button type="submit" class="btn">Cambiar contraseña</button>
+                </form>
+            </section>
+
+        </div>
+
+        <div class="pie-botones">
+            <a href="{% url 'dashboard' %}" class="btn btn-borde">Volver al dashboard</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

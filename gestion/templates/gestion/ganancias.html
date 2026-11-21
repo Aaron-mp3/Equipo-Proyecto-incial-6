@@ -1,0 +1,112 @@
+{% extends 'gestion/base.html' %}
+
+{% block titulo %}Inventaria - Ganancias por día{% endblock %}
+
+{% block contenido %}
+{% include 'gestion/_barra.html' %}
+
+<main class="panel">
+    <div class="contenedor">
+        <div class="encabezado-seccion">
+            <div>
+                <h2>Ganancias por día</h2>
+                <p class="subtitulo">Toca un día del calendario para ver sus ventas.</p>
+            </div>
+            <div class="acciones">
+                <a href="{% url 'tendencias' %}" class="btn btn-borde">Ver gráficas</a>
+                <a href="{% url 'ventas' %}" class="btn">+ Registrar venta</a>
+            </div>
+        </div>
+
+        <div class="resumen-chips">
+            <div class="chip"><span>Ganancia de {{ titulo_mes }}</span><strong>{{ resumen.ganancia_txt }}</strong></div>
+            <div class="chip"><span>Ventas del mes</span><strong>{{ resumen.ventas }}</strong></div>
+            <div class="chip"><span>Mejor día</span><strong class="chico">{{ resumen.mejor_dia }}</strong></div>
+        </div>
+
+        <div class="ganancias-layout">
+
+            <section class="calendario" aria-label="Calendario de ganancias">
+                <div class="cal-nav">
+                    <a href="?mes={{ anterior_txt }}" class="cal-flecha" aria-label="Mes anterior">‹</a>
+                    <strong>{{ titulo_mes }}</strong>
+                    {% if siguiente_txt %}
+                        <a href="?mes={{ siguiente_txt }}" class="cal-flecha" aria-label="Mes siguiente">›</a>
+                    {% else %}
+                        <span class="cal-flecha inactiva" aria-hidden="true">›</span>
+                    {% endif %}
+                </div>
+
+                <div class="cal-cabecera">
+                    {% for nombre in dias_semana %}<span>{{ nombre }}</span>{% endfor %}
+                </div>
+
+                {% for semana in semanas %}
+                <div class="cal-fila">
+                    {% for c in semana %}
+                        {% if not c.del_mes %}
+                            <span class="cal-dia fuera"></span>
+                        {% elif c.futuro %}
+                            <span class="cal-dia futuro"><b>{{ c.dia }}</b></span>
+                        {% else %}
+                            <a href="?mes={{ mes_txt }}&amp;dia={{ c.iso }}"
+                               class="cal-dia {{ c.clase }}{% if c.es_hoy %} hoy{% endif %}{% if c.seleccionado %} seleccionado{% endif %}"
+                               title="{{ c.dia }}: {% if c.ventas %}{{ c.ventas }} venta{{ c.ventas|pluralize }}, {{ c.ganancia_txt }}{% else %}sin ventas{% endif %}">
+                                <b>{{ c.dia }}</b>
+                                {% if c.ventas %}<small>{{ c.ganancia_txt }}</small>{% endif %}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endfor %}
+
+                <p class="leyenda cal-leyenda">
+                    <span class="punto positivo"></span> Ganancia
+                    <span class="punto negativo"></span> Pérdida
+                    <span class="punto vacio"></span> Sin ventas
+                </p>
+            </section>
+
+            <section class="detalle-dia" aria-live="polite">
+                {% if detalle %}
+                    <h3>{{ detalle.titulo }}</h3>
+                    <div class="detalle-totales">
+                        <div><span>Ganancia</span><strong>{{ detalle.ganancia_txt }}</strong></div>
+                        <div><span>Vendido</span><strong>{{ detalle.ingresos_txt }}</strong></div>
+                        <div><span>Unidades</span><strong>{{ detalle.unidades }}</strong></div>
+                    </div>
+                    {% if detalle.filas %}
+                        <div class="tabla-wrap">
+                            <table class="tabla" style="min-width: 0;">
+                                <thead>
+                                    <tr><th>Hora</th><th>Producto</th><th>Cant.</th><th>Ganancia</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for v in detalle.filas %}
+                                    <tr>
+                                        <td>{{ v.hora }}</td>
+                                        <td class="nombre">{{ v.producto }}</td>
+                                        <td>{{ v.cantidad }}</td>
+                                        <td class="{% if v.negativa %}perdida{% else %}venta{% endif %}">{{ v.ganancia_txt }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="subtitulo" style="padding: 18px 0;">No hubo ventas este día.</p>
+                    {% endif %}
+                {% else %}
+                    <h3>Elige un día</h3>
+                    <p class="subtitulo">Toca un día del calendario para ver cuánto ganaste y qué vendiste.</p>
+                {% endif %}
+            </section>
+
+        </div>
+
+        <div class="pie-botones">
+            <a href="{% url 'dashboard' %}" class="btn btn-borde">Volver al dashboard</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

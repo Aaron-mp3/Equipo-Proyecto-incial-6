@@ -1,123 +1,46 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Inventaria - Crear Producto</title>
-    <style>
-        body {
-            background-color: #1e293b; /* Fondo oscuro elegante acorde a tu diseño */
-            font-family: sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .contenedor-escritorio {
-            background-color: white;
-            padding: 40px;
-            border-radius: 20px;
-            width: 450px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            text-align: center;
-        }
-        h2 {
-            color: #333;
-            margin-bottom: 25px;
-        }
-        .campo-form {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #555;
-        }
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ccc;
-            border-radius: 10px;
-            box-sizing: border-box;
-            font-size: 1rem;
-        }
-        input:focus {
-            border-color: #d4af37;
-            outline: none;
-        }
-        /* Estilo ovalado idéntico a tus botones del menú */
-        .btn-oval {
-            display: inline-block;
-            background-color: #d4af37; /* Tono dorado principal */
-            color: white;
-            padding: 12px 30px;
-            border-radius: 30px;
-            text-decoration: none;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            width: 100%;
-            box-sizing: border-box;
-            transition: background 0.3s;
-            margin-top: 10px;
-        }
-        .btn-oval:hover {
-            background-color: #c59b27;
-        }
-        .btn-volver {
-            background-color: #94a3b8; /* Tono secundario para volver */
-            margin-top: 10px;
-        }
-        .btn-volver:hover {
-            background-color: #64748b;
-        }
-        .mensaje-error {
-            color: #dc2626;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
+{% extends 'gestion/base.html' %}
 
-    <div class="contenedor-escritorio">
-        <h2>Registrar Nuevo Producto</h2>
+{% block titulo %}Inventaria - Crear producto{% endblock %}
+
+{% block contenido %}
+{% include 'gestion/_barra.html' %}
+
+<main class="panel panel-estrecho">
+    <div class="contenedor">
+        <h2>Crear producto</h2>
+        <p class="subtitulo">Agrega un producto nuevo a tu inventario.</p>
+
+        <div class="adorno" style="margin-top: 22px;"><span></span></div>
 
         {% if mensaje_error %}
             <div class="mensaje-error">{{ mensaje_error }}</div>
         {% endif %}
 
-        <form method="POST">
+        <form method="POST" action="{% url 'crear_producto' %}" class="formulario">
             {% csrf_token %}
-            
-            <div class="campo-form">
-                <label for="nombre">Nombre del producto:</label>
-                <input type="text" id="nombre" name="nombre" placeholder="Ej. Zapatillas, Café, etc." value="{{ datos.nombre }}" required>
+
+            <label for="nombre">Nombre del producto</label>
+            <input type="text" id="nombre" name="nombre" placeholder="Ej. Zapatillas, Café, etc." value="{{ datos.nombre }}" required>
+
+            <label for="cantidad">Cantidad inicial (stock)</label>
+            <input type="number" id="cantidad" name="cantidad" placeholder="Ej. 15" min="0" step="1" value="{{ datos.cantidad }}" required>
+
+            <div class="fila">
+                <div>
+                    <label for="precio_costo">Precio de compra</label>
+                    <input type="number" id="precio_costo" name="precio_costo" placeholder="Ej. 3000" min="0" step="1" value="{{ datos.precio_costo }}" required>
+                </div>
+                <div>
+                    <label for="precio_venta">Precio de venta</label>
+                    <input type="number" id="precio_venta" name="precio_venta" placeholder="Ej. 5000" min="0" step="1" value="{{ datos.precio_venta }}" required>
+                </div>
             </div>
 
-            <div class="campo-form">
-                <label for="cantidad">Cantidad inicial (Stock):</label>
-                <input type="number" id="cantidad" name="cantidad" placeholder="Ej. 15" min="0" step="1" value="{{ datos.cantidad }}" required>
+            <div class="botones-form">
+                <button type="submit" class="btn">Guardar producto</button>
+                <a href="{% url 'menu' %}" class="btn btn-borde">Cancelar</a>
             </div>
-
-            <div class="campo-form">
-                <label for="precio_costo">Precio de compra (costo):</label>
-                <input type="number" id="precio_costo" name="precio_costo" placeholder="Ej. 3000" min="0" step="1" value="{{ datos.precio_costo }}" required>
-            </div>
-
-            <div class="campo-form">
-                <label for="precio_venta">Precio de venta:</label>
-                <input type="number" id="precio_venta" name="precio_venta" placeholder="Ej. 5000" min="0" step="1" value="{{ datos.precio_venta }}" required>
-            </div>
-
-            <button type="submit" class="btn-oval">Guardar Producto</button>
         </form>
-
-        <a href="{% url 'menu' %}" class="btn-oval btn-volver">Volver al menú</a>
     </div>
-
-</body>
-</html>
+</main>
+{% endblock %}

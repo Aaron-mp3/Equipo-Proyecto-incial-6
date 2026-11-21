@@ -1,5 +1,6 @@
 from django.contrib.auth.hashers import check_password, identify_hasher, make_password
 from django.db import models
+from django.utils import timezone
 from django.utils.crypto import constant_time_compare
 
 
@@ -9,6 +10,7 @@ class PerfilPyme(models.Model):
     nombre_pyme = models.CharField(max_length=100)
     correo = models.EmailField(unique=True)
     contrasena = models.CharField(max_length=128)
+    foto = models.FileField(upload_to='perfiles/', blank=True)
 
     def __str__(self):
         return self.nombre_pyme
@@ -56,7 +58,7 @@ class Venta(models.Model):
     cantidad = models.PositiveIntegerField()
     precio_unitario = models.IntegerField()
     ganancia = models.IntegerField(help_text="(precio de venta - precio de costo) x cantidad")
-    fecha = models.DateTimeField(auto_now_add=True)
+    fecha = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ['-fecha', '-id']

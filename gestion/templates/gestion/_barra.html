@@ -1,0 +1,20 @@
+<header class="barra">
+    <a href="{% url 'dashboard' %}" class="barra-marca">
+        {% include 'gestion/_marca_icono.html' %}
+        Inventaria
+    </a>
+    <div class="barra-usuario">
+        <a href="{% url 'perfil' %}" class="perfil-enlace" title="Mi perfil">
+            {% include 'gestion/_avatar.html' with pyme=request.pyme %}
+            <span>{{ request.pyme.nombre_pyme }}</span>
+        </a>
+        {% if request.resolver_match.url_name != 'dashboard' %}
+            <a href="{% url 'dashboard' %}" class="btn btn-claro">← Dashboard</a>
+        {% endif %}
+        <form action="{% url 'cerrar_sesion' %}" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-claro">Cerrar sesión</button>
+        </form>
+    </div>
+</header>
+{% include 'gestion/_menu_inferior.html' %}

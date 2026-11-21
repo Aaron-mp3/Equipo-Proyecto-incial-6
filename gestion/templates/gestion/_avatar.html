@@ -1,0 +1,5 @@
+{% if pyme.foto %}
+    <img class="avatar" src="/media/{{ pyme.foto.name }}" alt="Foto de perfil">
+{% else %}
+    <span class="avatar avatar-inicial" aria-hidden="true">{{ pyme.nombre_pyme|first|upper }}</span>
+{% endif %}

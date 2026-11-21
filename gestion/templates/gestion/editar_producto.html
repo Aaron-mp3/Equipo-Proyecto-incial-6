@@ -1,0 +1,48 @@
+{% extends 'gestion/base.html' %}
+
+{% block titulo %}Inventaria - Editar producto{% endblock %}
+
+{% block contenido %}
+{% include 'gestion/_barra.html' %}
+
+<main class="panel panel-estrecho">
+    <div class="contenedor">
+        <h2>Editar producto</h2>
+        <span class="dato-actual">Stock actual: {{ producto.cantidad_actual }} unidades</span>
+
+        <div class="adorno" style="margin-top: 22px;"><span></span></div>
+
+        {% if mensaje_error %}
+            <div class="mensaje-error">{{ mensaje_error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'editar_producto' producto.id %}" class="formulario">
+            {% csrf_token %}
+            <input type="hidden" name="volver" value="{{ volver }}">
+
+            <label for="nombre">Nombre del producto</label>
+            <input type="text" id="nombre" name="nombre" value="{{ datos.nombre }}" required>
+
+            <label for="agregar">Unidades a agregar al stock</label>
+            <input type="number" id="agregar" name="agregar" min="0" step="1" value="{{ datos.agregar }}">
+            <p class="ayuda">Se suman a las que ya tienes. Déjalo en 0 si solo quieres cambiar precios.</p>
+
+            <div class="fila">
+                <div>
+                    <label for="precio_costo">Precio de compra</label>
+                    <input type="number" id="precio_costo" name="precio_costo" min="0" step="1" value="{{ datos.precio_costo }}" required>
+                </div>
+                <div>
+                    <label for="precio_venta">Precio de venta</label>
+                    <input type="number" id="precio_venta" name="precio_venta" min="0" step="1" value="{{ datos.precio_venta }}" required>
+                </div>
+            </div>
+
+            <div class="botones-form">
+                <button type="submit" class="btn">Guardar cambios</button>
+                <a href="{% url volver %}" class="btn btn-borde">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</main>
+{% endblock %}

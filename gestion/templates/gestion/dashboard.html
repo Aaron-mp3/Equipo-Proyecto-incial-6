@@ -3,19 +3,7 @@
 {% block titulo %}Inventaria - Mi cuenta{% endblock %}
 
 {% block contenido %}
-<header class="barra">
-    <div class="barra-marca">
-        {% include 'gestion/_marca_icono.html' %}
-        Inventaria
-    </div>
-    <div class="barra-usuario">
-        <span>{{ pyme.nombre_pyme }}</span>
-        <form action="{% url 'cerrar_sesion' %}" method="POST">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-claro">Cerrar sesión</button>
-        </form>
-    </div>
-</header>
+{% include 'gestion/_barra.html' %}
 
 <main class="panel">
     <div class="panel-encabezado">
@@ -34,7 +22,7 @@
                 </svg>
             </div>
             <h2>Productos</h2>
-            <p class="tarjeta-desc">Busca, crea y elimina los productos de tu inventario.</p>
+            <p class="tarjeta-desc">Busca, crea, edita y elimina los productos de tu inventario.</p>
             <div class="tarjeta-dato">
                 <strong data-contar="{{ total_productos }}">{{ total_productos }}</strong>
                 <span>productos registrados</span>
@@ -84,11 +72,48 @@
                 <span>unidades en inventario</span>
             </div>
             {% if stock_bajo %}
-                <p class="tarjeta-alerta">⚠ {{ stock_bajo }} producto{{ stock_bajo|pluralize }} con stock bajo</p>
+                <p class="tarjeta-alerta">⚠ {{ stock_bajo }} producto{{ stock_bajo|pluralize }} con stock bajo ({{ umbral }} unidades o menos)</p>
             {% elif total_productos %}
                 <p class="tarjeta-ok">✓ Stock en buen nivel</p>
             {% endif %}
             <span class="tarjeta-ir">Ver stock</span>
+        </a>
+
+        <a href="{% url 'ganancias' %}" class="tarjeta" style="--i: 3;">
+            <div class="tarjeta-icono">
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+                    <rect x="6" y="9" width="36" height="33" rx="4"/>
+                    <path d="M6 19h36M16 5v8M32 5v8"/>
+                    <path d="M14 27h5M22 27h5M30 27h5M14 34h5M22 34h5"/>
+                </svg>
+            </div>
+            <h2>Ganancias</h2>
+            <p class="tarjeta-desc">Calendario con las ganancias de cada día de tu negocio.</p>
+            <div class="tarjeta-dato">
+                <strong>{{ ganancia_hoy_txt }}</strong>
+                <span>ganados hoy</span>
+            </div>
+            <span class="tarjeta-ir">Abrir calendario</span>
+        </a>
+
+        <a href="{% url 'tendencias' %}" class="tarjeta" style="--i: 4;">
+            <div class="tarjeta-icono">
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+                    <path d="M5 5v37h38"/>
+                    <path d="M11 32 20 22l7 6 14-16"/>
+                    <path d="M33 12h8v8"/>
+                </svg>
+            </div>
+            <h2>Tendencias</h2>
+            <p class="tarjeta-desc">Mira si tus ventas suben o bajan: día, semana y mes.</p>
+            <div class="tarjeta-dato">
+                <strong class="tendencia-{{ tendencia_semana.tendencia }}">
+                    {% if tendencia_semana.tendencia == 'sube' %}▲{% elif tendencia_semana.tendencia == 'baja' %}▼{% else %}＝{% endif %}
+                    {% if tendencia_semana.porcentaje_txt %}{{ tendencia_semana.porcentaje_txt }}%{% endif %}
+                </strong>
+                <span>ganancias vs. semana anterior</span>
+            </div>
+            <span class="tarjeta-ir">Ver gráficas</span>
         </a>
 
     </section>

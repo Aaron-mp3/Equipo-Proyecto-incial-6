@@ -1,0 +1,76 @@
+{% extends 'gestion/base.html' %}
+
+{% block titulo %}Inventaria - Tendencias{% endblock %}
+
+{% block contenido %}
+{% include 'gestion/_barra.html' %}
+
+<main class="panel">
+    <div class="contenedor">
+        <div class="encabezado-seccion">
+            <div>
+                <h2>Tendencias</h2>
+                <p class="subtitulo">¿Tus ventas están subiendo o bajando?</p>
+            </div>
+            <a href="{% url 'ganancias' %}" class="btn btn-borde">Ver calendario</a>
+        </div>
+
+        <div class="pestanas" role="tablist" aria-label="Qué medir">
+            {% for clave, nombre in metricas %}
+                <a href="?m={{ clave }}" class="pestana{% if clave == metrica %} activa{% endif %}">{{ nombre }}</a>
+            {% endfor %}
+        </div>
+
+        <div class="tendencias">
+            {% for p in periodos %}
+            <article class="tend-card {{ p.tendencia }}">
+                <h3>{{ p.titulo }}</h3>
+                <p class="subtitulo">{{ p.subtitulo }}</p>
+
+                <div class="tend-indicador">
+                    <span class="flecha">{% if p.tendencia == 'sube' %}▲{% elif p.tendencia == 'baja' %}▼{% else %}＝{% endif %}</span>
+                    <strong>{% if p.porcentaje_txt %}{{ p.porcentaje_txt }}%{% elif p.tendencia == 'igual' %}0%{% else %}—{% endif %}</strong>
+                </div>
+                <p class="tend-resumen">{{ p.resumen }}</p>
+
+                <div class="duo-barras">
+                    <div class="duo">
+                        <div class="duo-area"><div class="duo-barra anterior" style="height: {{ p.alto_anterior }}%;"></div></div>
+                        <span class="duo-valor">{{ p.anterior_txt }}</span>
+                        <span class="duo-etiqueta">{{ p.etiquetas.0 }}</span>
+                    </div>
+                    <div class="duo">
+                        <div class="duo-area"><div class="duo-barra actual" style="height: {{ p.alto_actual }}%;"></div></div>
+                        <span class="duo-valor">{{ p.actual_txt }}</span>
+                        <span class="duo-etiqueta">{{ p.etiquetas.1 }}</span>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        <h3 class="titulo-grafica">{{ etiqueta_metrica }} de los últimos 30 días</h3>
+        <div class="grafica-diaria" role="img" aria-label="Gráfica de barras de {{ etiqueta_metrica }} por día durante los últimos 30 días">
+            <div class="grafica-area">
+                <div class="grafica-base" style="bottom: {{ serie.base_css }}%;"></div>
+                {% for b in serie.barras %}
+                    <div class="grafica-col" title="{{ b.etiqueta }}: {{ b.texto }}">
+                        {% if b.valor %}
+                            <div class="grafica-barra{% if b.negativo %} neg{% endif %}{% if b.es_hoy %} hoy{% endif %}"
+                                 style="bottom: {{ b.inicio_css }}%; height: {{ b.alto_css }}%;"></div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="grafica-etiquetas">
+                {% for b in serie.barras %}<span>{% if b.mostrar_etiqueta %}<i>{{ b.etiqueta }}</i>{% endif %}</span>{% endfor %}
+            </div>
+            <p class="leyenda">Día más alto: {{ serie.maximo_txt }}. La barra dorada es hoy; pasa el mouse o toca una barra para ver su valor.</p>
+        </div>
+
+        <div class="pie-botones">
+            <a href="{% url 'dashboard' %}" class="btn btn-borde">Volver al dashboard</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

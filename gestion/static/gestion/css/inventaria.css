@@ -164,10 +164,12 @@ h1, h2, h3 { font-family: var(--fuente-titulos); color: var(--azul); margin: 0; 
 .panel-encabezado h1 { color: var(--crema); font-size: clamp(2rem, 4vw, 3rem); }
 .panel-encabezado p { color: var(--dorado-claro); margin: 10px 0 0; font-size: 1.05rem; }
 
-.tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 28px; }
+.tarjetas { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px; }
 
 .tarjeta {
     --i: 0;
+    flex: 1 1 280px;
+    max-width: 340px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -223,16 +225,271 @@ h1, h2, h3 { font-family: var(--fuente-titulos); color: var(--azul); margin: 0; 
 @media (max-width: 600px) {
     .barra { padding: 12px 16px; }
     .barra-marca { font-size: 1.3rem; }
-    .barra-usuario > span { display: none; }
+    .perfil-enlace span:not(.avatar) { display: none; }
+    .barra-usuario a.btn { display: none; }   /* el logo ya lleva al dashboard */
+    .btn-claro { white-space: nowrap; padding: 8px 14px; }
     .tarjeta-auth { padding: 34px 22px 28px; }
     .panel { padding-top: 32px; }
 }
 
 /* Barra dorada superior de las tarjetas */
-.tarjeta-auth::before, .tarjeta::before {
+.tarjeta-auth::before, .tarjeta::before, .contenedor::before {
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 6px;
     background: linear-gradient(90deg, var(--dorado-oscuro), var(--dorado-claro), var(--dorado-oscuro));
 }
+
+/* ------------------------------------- Pantallas internas (tablas y formularios) */
+
+.barra-marca { text-decoration: none; }
+
+.contenedor {
+    position: relative;
+    overflow: hidden;
+    background: var(--crema);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    padding: 40px 32px 32px;
+}
+.panel-estrecho { max-width: 560px; }
+
+.encabezado-seccion { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+.encabezado-seccion h2 { font-size: 2rem; }
+.subtitulo { margin: 6px 0 0; color: var(--gris); }
+
+.buscador { display: flex; gap: 12px; margin-bottom: 22px; }
+.buscador input {
+    flex: 1; min-width: 0;
+    font-family: var(--fuente-texto); font-size: 1rem;
+    padding: 12px 18px; border: 2px solid var(--gris-claro); border-radius: 999px;
+    background: var(--blanco); color: var(--texto); outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.buscador input:focus { border-color: var(--dorado); box-shadow: 0 0 0 4px rgba(201, 171, 99, 0.22); }
+
+.tabla-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--gris-claro); background: var(--blanco); }
+.tabla { width: 100%; border-collapse: collapse; min-width: 560px; }
+.tabla th {
+    background: var(--azul); color: var(--dorado-claro);
+    text-align: left; padding: 14px 16px;
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
+}
+.tabla td { padding: 14px 16px; border-bottom: 1px solid var(--gris-claro); vertical-align: middle; }
+.tabla tbody tr:last-child td { border-bottom: none; }
+.tabla tbody tr { transition: background 0.15s ease; }
+.tabla tbody tr:hover { background: #F6F0DF; }
+.tabla .nombre { font-weight: 700; color: var(--azul); }
+.tabla .venta { font-weight: 700; color: var(--verde); }
+.tabla-vacia { padding: 34px 16px !important; text-align: center; color: var(--gris); }
+
+.insignia { display: inline-block; margin-left: 8px; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.03em; white-space: nowrap; }
+.insignia-bajo { background: #FBE4E3; color: #A8322F; }
+.insignia-ok { background: #DDF2E3; color: #2C7347; }
+
+.acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+.acciones form { margin: 0; }
+.btn-chico { padding: 7px 18px; font-size: 0.85rem; }
+.btn-peligro { background: var(--rojo); border-color: var(--rojo); color: var(--blanco); }
+.btn-peligro:hover { background: #B83D3A; border-color: #B83D3A; color: var(--blanco); box-shadow: 0 8px 18px rgba(210, 76, 73, 0.3); }
+
+.mensaje-exito {
+    background: #DDF2E3; color: #2C7347; border-left: 4px solid var(--verde);
+    border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;
+    font-size: 0.92rem; font-weight: 600; text-align: left;
+}
+
+.leyenda { margin: 16px 0 0; color: var(--gris); font-size: 0.88rem; }
+.pie-botones { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 26px; }
+.pie-botones .btn { min-width: 180px; }
+
+.formulario .ayuda { margin: -8px 0 0; font-size: 0.8rem; color: var(--gris); }
+.formulario .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.formulario .fila > div { display: flex; flex-direction: column; gap: 8px; }
+.formulario .botones-form { display: flex; gap: 12px; margin-top: 6px; }
+.formulario .botones-form .btn { flex: 1; margin-top: 0; }
+.dato-actual { display: inline-block; margin-top: 8px; padding: 6px 16px; border-radius: 999px; background: var(--azul); color: var(--dorado-claro); font-weight: 700; font-size: 0.9rem; }
+
+@media (max-width: 600px) {
+    .contenedor { padding: 34px 18px 24px; }
+    .formulario .fila { grid-template-columns: 1fr; }
+    .buscador { flex-direction: column; }
+}
+
+/* ======================================================================
+   Avatar, perfil, ventas, calendario, tendencias, dispositivo
+   ====================================================================== */
+
+.avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; flex: none; border: 2px solid var(--dorado); background: var(--azul-medio); }
+.avatar-inicial { display: grid; place-items: center; color: var(--dorado-claro); font-family: var(--fuente-titulos); font-weight: 700; font-size: 1.1rem; }
+.avatar-grande-caja .avatar { width: 96px; height: 96px; border-width: 3px; font-size: 2.4rem; }
+.perfil-enlace { display: flex; align-items: center; gap: 10px; padding: 4px 14px 4px 4px; border-radius: 999px; color: var(--dorado-claro); text-decoration: none; font-weight: 600; transition: background 0.2s ease; }
+.perfil-enlace:hover { background: rgba(251, 248, 241, 0.12); }
+
+.enlace-chico { color: var(--gris); font-size: 0.85rem; text-decoration: underline; }
+.enlace-chico:hover { color: var(--azul); }
+
+.tendencia-sube { color: var(--verde) !important; }
+.tendencia-baja { color: var(--rojo) !important; }
+.tendencia-igual { color: var(--gris) !important; }
+
+/* ----------------------------------------------------------- perfil */
+.perfil-cabecera { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin-bottom: 24px; }
+.perfil-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+.perfil-bloque { background: var(--blanco); border: 1px solid var(--gris-claro); border-radius: 16px; padding: 26px; }
+.perfil-bloque.ancho { grid-column: 1 / -1; }
+.perfil-bloque h3 { font-size: 1.35rem; margin-bottom: 16px; }
+.formulario input[type="file"] { padding: 10px 14px; background: var(--crema); }
+
+/* ----------------------------------------------------------- ventas */
+.dos-columnas { display: grid; grid-template-columns: minmax(300px, 400px) 1fr; gap: 24px; align-items: start; }
+.caja-ganancias { margin-top: 18px; padding: 16px; border-radius: 14px; background: var(--azul); color: var(--dorado-claro); font-family: var(--fuente-titulos); font-size: 1.6rem; text-align: center; }
+
+/* ------------------------------------------------------- calendario */
+.resumen-chips { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
+.chip { flex: 1 1 170px; background: var(--blanco); border: 1px solid var(--gris-claro); border-radius: 14px; padding: 14px 18px; }
+.chip span { display: block; color: var(--gris); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.chip strong { font-family: var(--fuente-titulos); font-size: 1.8rem; color: var(--azul); }
+.chip strong.chico { font-size: 1.15rem; line-height: 1.5; display: inline-block; }
+
+.ganancias-layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.calendario, .detalle-dia { background: var(--blanco); border: 1px solid var(--gris-claro); border-radius: 16px; padding: 18px; }
+.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.cal-nav strong { font-family: var(--fuente-titulos); font-size: 1.4rem; color: var(--azul); }
+.cal-flecha { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--azul); color: var(--azul); text-decoration: none; font-size: 1.4rem; line-height: 1; transition: background 0.2s ease, color 0.2s ease; }
+a.cal-flecha:hover { background: var(--azul); color: var(--dorado-claro); }
+.cal-flecha.inactiva { opacity: 0.25; }
+
+.cal-cabecera, .cal-fila { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.cal-fila { margin-top: 6px; }
+.cal-cabecera span { text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--gris); text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 0; }
+
+.cal-dia { min-height: 66px; display: flex; flex-direction: column; justify-content: space-between; padding: 7px 8px; border-radius: 10px; border: 2px solid transparent; background: #F4F0E4; color: var(--texto); text-decoration: none; transition: transform 0.15s ease, border-color 0.15s ease; }
+.cal-dia b { font-size: 0.9rem; }
+.cal-dia small { font-size: 0.7rem; font-weight: 700; word-break: break-all; }
+.cal-dia.positivo { background: #DDF2E3; color: #1F6B3F; }
+.cal-dia.negativo { background: #FBE4E3; color: #A8322F; }
+.cal-dia.neutro { background: #EFE9D2; }
+.cal-dia.fuera { background: transparent; }
+.cal-dia.futuro { opacity: 0.35; }
+a.cal-dia:hover { transform: translateY(-3px); border-color: var(--dorado); }
+.cal-dia.hoy b::after { content: " •"; color: var(--dorado-oscuro); }
+.cal-dia.seleccionado { border-color: var(--azul); box-shadow: 0 0 0 3px rgba(201, 171, 99, 0.5); }
+
+.cal-leyenda { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.punto { display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: -6px; }
+.punto.positivo { background: #BFE5CA; }
+.punto.negativo { background: #F3C3C1; }
+.punto.vacio { background: #E9E2CC; }
+
+.detalle-dia h3 { font-size: 1.35rem; margin-bottom: 14px; text-transform: capitalize; }
+.detalle-totales { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.detalle-totales div { background: var(--crema); border-radius: 12px; padding: 10px 12px; }
+.detalle-totales span { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gris); }
+.detalle-totales strong { font-family: var(--fuente-titulos); font-size: 1.25rem; color: var(--azul); }
+.tabla .perdida { font-weight: 700; color: var(--rojo); }
+
+/* ------------------------------------------------------- tendencias */
+.pestanas { display: inline-flex; background: #ECE6D3; border-radius: 999px; padding: 4px; margin-bottom: 22px; }
+.pestana { padding: 8px 22px; border-radius: 999px; text-decoration: none; color: var(--azul); font-weight: 700; font-size: 0.9rem; transition: background 0.2s ease, color 0.2s ease; }
+.pestana.activa { background: var(--azul); color: var(--dorado-claro); }
+
+.tendencias { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; margin-bottom: 30px; }
+.tend-card { background: var(--blanco); border: 1px solid var(--gris-claro); border-top: 5px solid var(--dorado); border-radius: 16px; padding: 22px; }
+.tend-card.sube { border-top-color: var(--verde); }
+.tend-card.baja { border-top-color: var(--rojo); }
+.tend-card h3 { font-size: 1.45rem; }
+.tend-indicador { display: flex; align-items: baseline; gap: 10px; margin: 14px 0 6px; color: var(--gris); }
+.tend-indicador .flecha { font-size: 1.5rem; }
+.tend-indicador strong { font-family: var(--fuente-titulos); font-size: 2.5rem; line-height: 1; }
+.tend-card.sube .tend-indicador { color: var(--verde); }
+.tend-card.baja .tend-indicador { color: var(--rojo); }
+.tend-resumen { margin: 0 0 16px; min-height: 2.8em; font-size: 0.95rem; }
+
+.duo-barras { display: flex; gap: 20px; }
+.duo { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.duo-area { height: 110px; width: 100%; display: flex; align-items: flex-end; justify-content: center; border-bottom: 2px solid var(--gris-claro); }
+.duo-barra { width: 58%; min-height: 3px; border-radius: 8px 8px 0 0; background: #C5CCDA; transition: height 0.6s ease; }
+.duo-barra.actual { background: var(--azul); }
+.tend-card.sube .duo-barra.actual { background: var(--verde); }
+.tend-card.baja .duo-barra.actual { background: var(--rojo); }
+.duo-valor { font-weight: 700; font-size: 0.95rem; }
+.duo-etiqueta { font-size: 0.72rem; color: var(--gris); text-align: center; }
+
+.titulo-grafica { font-size: 1.4rem; margin-bottom: 12px; }
+.grafica-diaria { background: var(--blanco); border: 1px solid var(--gris-claro); border-radius: 16px; padding: 22px 20px 14px; }
+.grafica-area { position: relative; height: 230px; display: flex; gap: 3px; }
+.grafica-col { position: relative; flex: 1; height: 100%; border-radius: 4px; }
+.grafica-col:hover { background: rgba(201, 171, 99, 0.16); }
+.grafica-barra { position: absolute; left: 12%; right: 12%; background: var(--azul-medio); border-radius: 4px 4px 0 0; transition: filter 0.15s ease; }
+.grafica-barra.neg { background: var(--rojo); border-radius: 0 0 4px 4px; }
+.grafica-barra.hoy { background: var(--dorado-oscuro); }
+.grafica-col:hover .grafica-barra { filter: brightness(1.3); }
+.grafica-base { position: absolute; left: 0; right: 0; height: 0; border-top: 2px solid var(--gris-claro); pointer-events: none; }
+.grafica-etiquetas { display: flex; gap: 3px; margin-top: 8px; }
+.grafica-etiquetas span { position: relative; flex: 1; height: 16px; }
+.grafica-etiquetas i { position: absolute; left: 50%; transform: translateX(-50%); font-style: normal; font-size: 0.65rem; color: var(--gris); white-space: nowrap; }
+
+/* ------------------------------------------- pantalla de dispositivo */
+.estoy-en { margin: 0 0 6px; font-size: 1.2rem; color: var(--azul); }
+.estoy-en strong { color: var(--dorado-oscuro); }
+.dispositivos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-top: 10px; }
+.dispositivo { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 26px 10px 20px; border-radius: 16px; border: 2px solid var(--gris-claro); background: var(--blanco); color: var(--azul); font-weight: 700; text-decoration: none; transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+.dispositivo svg { width: 66px; height: 66px; color: var(--dorado-oscuro); }
+.dispositivo:hover, .dispositivo:focus-visible { transform: translateY(-5px); border-color: var(--dorado); box-shadow: 0 12px 24px rgba(8, 15, 32, 0.18); outline: none; }
+.dispositivo.detectado { border-color: var(--dorado); background: #FFFBEF; }
+.etiqueta-detectado { position: absolute; top: -11px; background: var(--dorado); color: var(--azul); font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 12px; border-radius: 999px; }
+
+/* --------------------------------------------- menú inferior (celular) */
+.menu-inferior { display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; justify-content: space-around; gap: 2px; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: rgba(14, 25, 48, 0.97); border-top: 1px solid rgba(201, 171, 99, 0.45); }
+.menu-inferior a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 2px; border-radius: 12px; color: var(--dorado-claro); text-decoration: none; font-size: 0.66rem; font-weight: 600; }
+.menu-inferior svg { width: 24px; height: 24px; }
+.menu-inferior a.activo { background: var(--dorado); color: var(--azul); }
+
+/* ------------------------------------------------------ pantallas chicas */
+@media (max-width: 800px) {
+    .perfil-grid, .ganancias-layout, .dos-columnas { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 600px) {
+    .menu-inferior { display: flex; }
+    body { padding-bottom: 82px; }
+    .barra-usuario a.btn { display: none; }
+    .cal-dia { min-height: 46px; padding: 5px; }
+    .cal-dia small { display: none; }
+    .detalle-totales { grid-template-columns: 1fr 1fr 1fr; }
+    .detalle-totales strong { font-size: 1.05rem; }
+    .grafica-area { height: 190px; }
+    .formulario .botones-form { flex-direction: column; }
+}
+
+/* ---------------------------------------------------- modo "Celular" elegido */
+.modo-celular { padding-bottom: 82px; }
+.modo-celular .menu-inferior { display: flex; }
+.modo-celular .barra { padding: 12px 16px; }
+.modo-celular .barra-marca { font-size: 1.3rem; }
+.modo-celular .barra-usuario a.btn { display: none; }
+.modo-celular .perfil-enlace span:not(.avatar) { display: none; }
+.modo-celular .panel { padding: 28px 14px 24px; }
+.modo-celular .contenedor { padding: 34px 16px 24px; }
+.modo-celular .btn { padding: 15px 30px; font-size: 1.05rem; }          /* botones grandes para el dedo */
+.modo-celular .btn-chico { padding: 10px 18px; font-size: 0.95rem; }
+.modo-celular .barra .btn-claro { white-space: nowrap; padding: 8px 14px; font-size: 0.9rem; }
+.modo-celular .formulario input, .modo-celular .buscador input { font-size: 1.05rem; padding: 15px 18px; }
+.modo-celular .perfil-grid, .modo-celular .ganancias-layout, .modo-celular .dos-columnas { grid-template-columns: minmax(0, 1fr); }
+.modo-celular .formulario .fila { grid-template-columns: 1fr; }
+.modo-celular .formulario .botones-form { flex-direction: column; }
+.modo-celular .buscador { flex-direction: column; }
+.modo-celular .cal-dia { min-height: 46px; padding: 5px; }
+.modo-celular .cal-dia small { display: none; }
+.modo-celular .tarjeta { max-width: none; }
+
+/* Elegiste "Computador" aunque la pantalla sea chica: sin menú inferior */
+.modo-computador .menu-inferior { display: none; }
+.modo-computador { padding-bottom: 0; }
+
+/* Tablas compactas en celular: que quepan todas las columnas */
+.modo-celular .tabla th,
+.modo-celular .tabla td { padding: 10px 6px; font-size: 0.88rem; letter-spacing: 0; }
+.modo-celular .tabla th { font-size: 0.7rem; }

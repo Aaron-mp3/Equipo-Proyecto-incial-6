@@ -1,98 +1,87 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventaria - Módulo de Ventas</title>
-    <style>
-        body { background-color: #15233E; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; font-family: Arial, sans-serif; }
-        .contenedor-principal { background-color: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; gap: 40px; width: 90%; max-width: 1200px; }
-        
-        /* Columna Izquierda */
-        .columna-izquierda { flex: 1; display: flex; flex-direction: column; gap: 25px; }
-        .caja-input { border: 3px solid #15233E; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px; background: #fff; }
-        .caja-input label { font-weight: bold; color: #15233E; font-size: 1.1rem; }
-        .caja-input input { border: 2px solid #DDE3EC; border-radius: 8px; padding: 12px; font-size: 1.2rem; outline: none; }
-        
-        .contenedor-botones { display: flex; gap: 15px; }
-        .btn-accion { flex: 1; padding: 15px; border-radius: 10px; font-size: 1.2rem; font-weight: bold; border: 3px solid #15233E; cursor: pointer; text-align: center; text-decoration: none; background-color: #C9AB63; color: #15233E; transition: transform 0.2s; }
-        .btn-borrar { background-color: #D24C49; color: #fff; }
-        .btn-accion:hover { transform: scale(1.03); }
+{% extends 'gestion/base.html' %}
 
-        /* Columna Derecha */
-        .columna-derecha { flex: 1; display: flex; flex-direction: column; gap: 20px; }
-        .tabla-ventas-container { border: 3px solid #15233E; border-radius: 12px; height: 350px; overflow-y: auto; padding: 15px; background: #fff; }
-        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 1.1rem; }
-        th { background-color: #C9AB63; padding: 12px; border: 1px solid #15233E; }
-        td { padding: 10px; border-bottom: 1px solid #DDE3EC; }
+{% block titulo %}Inventaria - Ventas{% endblock %}
 
-        .caja-ganancias { border: 3px solid #15233E; border-radius: 12px; padding: 20px; text-align: center; font-size: 1.5rem; font-weight: bold; background-color: #F7F9FC; }
-        
-        .btn-volver { background-color: #D5DBE5; border: 2px solid #15233E; padding: 10px 25px; border-radius: 50px; text-decoration: none; color: #15233E; font-weight: bold; align-self: flex-start; }
-    </style>
-</head>
-<body>
-    <div class="contenedor-principal">
-        
-        <!-- Columna Izquierda: Controles de Venta -->
-        <form method="POST" class="columna-izquierda">
-            {% csrf_token %}
-            <h2>Módulo de Ventas</h2>
+{% block contenido %}
+{% include 'gestion/_barra.html' %}
 
-            {% if mensaje_error %}
-                <div style="color: #D24C49; font-weight: bold; background: #F9D9D7; padding: 10px; border-radius: 8px;">{{ mensaje_error }}</div>
-            {% endif %}
+<main class="panel">
+    <div class="dos-columnas">
+
+        <div class="contenedor">
+            <h2>Registrar venta</h2>
+            <p class="subtitulo">Escribe el producto y la cantidad vendida.</p>
+
+            <div class="adorno" style="margin-top: 22px;"><span></span></div>
+
             {% for mensaje in messages %}
-                <div style="color: #3E9B5F; font-weight: bold; background: #DDF2E3; padding: 10px; border-radius: 8px;">{{ mensaje }}</div>
+                <div class="mensaje-exito">{{ mensaje }}</div>
             {% endfor %}
 
-            <div class="caja-input">
-                <label>BUSCADOR DE PRODUCTO AL CUAL SE LE VA A SUSTRAER SU CANTIDAD</label>
-                <input type="text" name="q" placeholder="Ej. Manzanas..." value="{{ request.POST.q }}">
-            </div>
+            {% if mensaje_error %}
+                <div class="mensaje-error">{{ mensaje_error }}</div>
+            {% endif %}
 
-            <div class="caja-input">
-                <label>CANTIDAD A SUSTRAER DEL PRODUCTO</label>
-                <input type="number" name="cantidad" min="1" placeholder="Ej. 15" value="{{ request.POST.cantidad }}">
-            </div>
+            <form method="POST" action="{% url 'ventas' %}" class="formulario">
+                {% csrf_token %}
 
-            <div class="contenedor-botones">
-                <button type="submit" name="accion" value="borrar" class="btn-accion btn-borrar">BORRAR</button>
-                <button type="submit" name="accion" value="confirmar" class="btn-accion">CONFIRMAR</button>
-            </div>
+                <label for="q">Producto</label>
+                <input type="text" id="q" name="q" value="{{ request.POST.q }}" placeholder="Nombre del producto">
 
-            <a href="{% url 'dashboard' %}" class="btn-volver">Volver al Dashboard</a>
-        </form>
+                <label for="cantidad">Cantidad</label>
+                <input type="number" id="cantidad" name="cantidad" min="1" step="1" value="{{ request.POST.cantidad }}" placeholder="Ej. 2">
 
-        <!-- Columna Derecha: Tabla y Ganancias -->
-        <div class="columna-derecha">
-            <div class="tabla-ventas-container">
-                <h3 style="margin-top: 0; text-align: center;">VENTAS</h3>
-                <table>
-                    <tr>
-                        <th>PRODUCTO</th>
-                        <th>CANTIDAD</th>
-                        <th>PRECIO</th>
-                    </tr>
-                    {% for venta in ventas %}
-                    <tr>
-                        <td>{{ venta.nombre_producto }}</td>
-                        <td>{{ venta.cantidad }}</td>
-                        <td>${{ venta.precio_unitario }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3" style="color: #6B7790; padding: 30px;">Aún no se han registrado ventas.</td>
-                    </tr>
-                    {% endfor %}
-                </table>
-            </div>
+                <label for="fecha">Fecha de la venta (opcional)</label>
+                <input type="date" id="fecha" name="fecha" max="{{ hoy_iso }}" value="{{ request.POST.fecha }}">
+                <p class="ayuda">Déjala vacía para usar hoy. Cámbiala solo si olvidaste anotar una venta de un día anterior.</p>
 
-            <div class="caja-ganancias">
-                GANANCIAS: ${{ ganancias_totales }}
+                <div class="botones-form">
+                    <button type="submit" name="accion" value="borrar" class="btn btn-borde" formnovalidate>Borrar</button>
+                    <button type="submit" name="accion" value="confirmar" class="btn">Confirmar</button>
+                </div>
+            </form>
+
+            <div class="pie-botones">
+                <a href="{% url 'ganancias' %}" class="btn btn-borde">Ver ganancias por día</a>
             </div>
         </div>
 
+        <div class="contenedor">
+            <div class="encabezado-seccion">
+                <h2>Ventas</h2>
+                <a href="{% url 'tendencias' %}" class="btn btn-borde btn-chico">Ver gráficas</a>
+            </div>
+
+            <div class="tabla-wrap">
+                <table class="tabla" style="min-width: 0;">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Producto</th>
+                            <th>Cant.</th>
+                            <th>Precio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for venta in ventas %}
+                        <tr>
+                            <td>{{ venta.fecha }}</td>
+                            <td class="nombre">{{ venta.nombre }}</td>
+                            <td>{{ venta.cantidad }}</td>
+                            <td class="venta">{{ venta.precio_txt }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="tabla-vacia">Aún no se han registrado ventas.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="caja-ganancias">GANANCIAS: {{ ganancias_texto }}</div>
+        </div>
+
     </div>
-</body>
-</html>
+</main>
+{% endblock %}

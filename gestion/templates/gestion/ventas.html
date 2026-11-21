@@ -42,9 +42,9 @@
             {% if mensaje_error %}
                 <div style="color: #D24C49; font-weight: bold; background: #F9D9D7; padding: 10px; border-radius: 8px;">{{ mensaje_error }}</div>
             {% endif %}
-            {% if mensaje_exito %}
-                <div style="color: #3E9B5F; font-weight: bold; background: #DDF2E3; padding: 10px; border-radius: 8px;">{{ mensaje_exito }}</div>
-            {% endif %}
+            {% for mensaje in messages %}
+                <div style="color: #3E9B5F; font-weight: bold; background: #DDF2E3; padding: 10px; border-radius: 8px;">{{ mensaje }}</div>
+            {% endfor %}
 
             <div class="caja-input">
                 <label>BUSCADOR DE PRODUCTO AL CUAL SE LE VA A SUSTRAER SU CANTIDAD</label>
@@ -76,11 +76,11 @@
                     </tr>
                     {% for venta in ventas %}
                     <tr>
-                        <td>{{ venta.nombre }}</td>
+                        <td>{{ venta.nombre_producto }}</td>
                         <td>{{ venta.cantidad }}</td>
-                        <td>${{ venta.precio_venta }}</td>
+                        <td>${{ venta.precio_unitario }}</td>
                     </tr>
-                    {% empty}
+                    {% empty %}
                     <tr>
                         <td colspan="3" style="color: #6B7790; padding: 30px;">Aún no se han registrado ventas.</td>
                     </tr>

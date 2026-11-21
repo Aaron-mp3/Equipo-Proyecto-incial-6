@@ -95,17 +95,22 @@
             
             <div class="campo-form">
                 <label for="nombre">Nombre del producto:</label>
-                <input type="text" id="nombre" name="nombre" placeholder="Ej. Zapatillas, Café, etc." required>
+                <input type="text" id="nombre" name="nombre" placeholder="Ej. Zapatillas, Café, etc." value="{{ datos.nombre }}" required>
             </div>
 
             <div class="campo-form">
                 <label for="cantidad">Cantidad inicial (Stock):</label>
-                <input type="number" id="cantidad" name="cantidad" placeholder="Ej. 15" min="0" required>
+                <input type="number" id="cantidad" name="cantidad" placeholder="Ej. 15" min="0" step="1" value="{{ datos.cantidad }}" required>
             </div>
 
             <div class="campo-form">
-                <label for="precio">Precio del producto:</label>
-                <input type="number" id="precio" name="precio" placeholder="Ej. 5000" step="0.01" min="0" required>
+                <label for="precio_costo">Precio de compra (costo):</label>
+                <input type="number" id="precio_costo" name="precio_costo" placeholder="Ej. 3000" min="0" step="1" value="{{ datos.precio_costo }}" required>
+            </div>
+
+            <div class="campo-form">
+                <label for="precio_venta">Precio de venta:</label>
+                <input type="number" id="precio_venta" name="precio_venta" placeholder="Ej. 5000" min="0" step="1" value="{{ datos.precio_venta }}" required>
             </div>
 
             <button type="submit" class="btn-oval">Guardar Producto</button>

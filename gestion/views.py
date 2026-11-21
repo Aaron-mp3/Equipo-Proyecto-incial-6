@@ -1,202 +1,264 @@
-from django.shortcuts import render, redirect
-from .models import PerfilPyme, PerfilDueno, Producto
+from functools import wraps
+from urllib.parse import urlencode
+
+from django.contrib import messages
+from django.db import IntegrityError, transaction
+from django.db.models import Count, Sum
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.views.decorators.http import require_POST
+
+from .models import PerfilPyme, Producto, Venta
+
+
+def pyme_requerida(vista):
+    """Solo deja pasar si hay una PYME con sesión iniciada.
+
+    Deja la PYME disponible como request.pyme.
+    """
+    @wraps(vista)
+    def envoltura(request, *args, **kwargs):
+        pyme = PerfilPyme.objects.filter(id=request.session.get('pyme_id')).first()
+        if pyme is None:
+            request.session.flush()
+            return redirect('inicio')
+        request.pyme = pyme
+        return vista(request, *args, **kwargs)
+    return envoltura
+
+
+# ---------------------------------------------------------------- cuenta
 
 def pantalla_inicio(request):
     mensaje_error = ""
-    
+
     if request.method == 'POST':
-        correo_ingresado = request.POST.get('correo')
-        contrasena_ingresada = request.POST.get('contrasena')
+        correo = request.POST.get('correo', '').strip()
+        contrasena = request.POST.get('contrasena', '')
 
-        pyme = PerfilPyme.objects.filter(correo=correo_ingresado, contrasena=contrasena_ingresada).first()
+        pyme = PerfilPyme.objects.filter(correo__iexact=correo).first()
 
-        if pyme:
+        if pyme and pyme.verificar_contrasena(contrasena):
+            request.session.cycle_key()
             request.session['pyme_id'] = pyme.id
-            request.session['nombre_pyme'] = pyme.nombre_pyme 
-            return redirect('menu_principal')
-        else:
-            mensaje_error = "Correo o contraseña incorrectos."
+            request.session['nombre_pyme'] = pyme.nombre_pyme
+            return redirect('dashboard')
 
-    context = {'mensaje_error': mensaje_error}
-    return render(request, 'gestion/login.html', context)
+        mensaje_error = "Correo o contraseña incorrectos."
+
+    return render(request, 'gestion/login.html', {
+        'mensaje_error': mensaje_error,
+        'correo': request.POST.get('correo', ''),
+    })
+
 
 def registro(request):
-    if request.method == 'POST':
-        n_pyme = request.POST.get('nombre_pyme')
-        corr = request.POST.get('correo')
-        passw = request.POST.get('contrasena')
-
-        PerfilPyme.objects.create(
-            nombre_pyme=n_pyme,
-            correo=corr,
-            contrasena=passw
-        )
-        return redirect('inicio')
-
-    return render(request, 'gestion/registro.html')
-
-def dashboard(request):
-    return render(request, 'gestion/dashboard.html')
-
-def menu_principal(request):
-    query = request.GET.get('q', '') # Mantenemos 'q' para que coincida con tu input de búsqueda HTML
-    resultados = []
     mensaje_error = ""
 
-    # Obtenemos el ID de la pyme/dueño actual desde la sesión
-    pyme_id = request.session.get('pyme_id')
+    if request.method == 'POST':
+        nombre_pyme = request.POST.get('nombre_pyme', '').strip()
+        correo = request.POST.get('correo', '').strip().lower()
+        contrasena = request.POST.get('contrasena', '')
 
-    if query and pyme_id:
-        perfil_dueno = PerfilDueno.objects.filter(id=pyme_id).first()
-        if perfil_dueno:
-            # Buscamos en la base de datos filtrando por el dueño y el nombre del producto
-            resultados = Producto.objects.filter(dueno=perfil_dueno, nombre__icontains=query)
-    
-    if query and not resultados:
+        if not nombre_pyme or not correo or not contrasena:
+            mensaje_error = "Completa todos los campos."
+        elif PerfilPyme.objects.filter(correo__iexact=correo).exists():
+            mensaje_error = "Ya existe una cuenta con ese correo."
+        else:
+            pyme = PerfilPyme(nombre_pyme=nombre_pyme, correo=correo)
+            pyme.set_password(contrasena)
+            try:
+                pyme.save()
+            except IntegrityError:
+                mensaje_error = "Ya existe una cuenta con ese correo."
+            else:
+                return redirect('inicio')
+
+    return render(request, 'gestion/registro.html', {
+        'mensaje_error': mensaje_error,
+        'nombre_pyme': request.POST.get('nombre_pyme', ''),
+        'correo': request.POST.get('correo', ''),
+    })
+
+
+@require_POST
+def cerrar_sesion(request):
+    request.session.flush()
+    return redirect('inicio')
+
+
+UMBRAL_STOCK_BAJO = 5  # productos con esta cantidad o menos se marcan como "stock bajo"
+
+
+@pyme_requerida
+def dashboard(request):
+    productos = Producto.objects.filter(dueno=request.pyme)
+    resumen = productos.aggregate(total=Count('id'), unidades=Sum('cantidad_actual'))
+    ganancias = Venta.objects.filter(pyme=request.pyme).aggregate(total=Sum('ganancia'))['total'] or 0
+
+    return render(request, 'gestion/dashboard.html', {
+        'pyme': request.pyme,
+        'total_productos': resumen['total'],
+        'total_unidades': resumen['unidades'] or 0,
+        'stock_bajo': productos.filter(cantidad_actual__lte=UMBRAL_STOCK_BAJO).count(),
+        'ganancias': ganancias,
+    })
+
+
+# ------------------------------------------------------------- productos
+
+@pyme_requerida
+def menu_principal(request):
+    query = request.GET.get('q', '').strip()
+    mensaje_error = ""
+
+    productos = Producto.objects.filter(dueno=request.pyme).order_by('nombre')
+    if query:
+        productos = productos.filter(nombre__icontains=query)
+    productos = list(productos)
+
+    if query and not productos:
         mensaje_error = f"No se encontró el producto '{query}' en el inventario."
 
-    context = {
+    return render(request, 'gestion/menu_principal.html', {
         'query': query,
-        'resultados': resultados,
-        'mensaje_error': mensaje_error
-    }
-    return render(request, 'gestion/menu_principal.html', context)
+        'resultados': productos,
+        'mensaje_error': mensaje_error,
+    })
 
-def vista_stock(request):
-    resultados = []
-    inventario_procesado = []
 
-    pyme_id = request.session.get('pyme_id')
-    if pyme_id:
-        perfil_dueno = PerfilDueno.objects.filter(id=pyme_id).first()
-        if perfil_dueno:
-            # Obtenemos los productos reales de la base de datos de este usuario
-            productos_bd = Producto.objects.filter(dueno=perfil_dueno)
-            
-            for prod in productos_bd:
-                # Calculamos precios con IVA y salida dinámicamente
-                precio_con_iva = prod.precio_costo * 1.19 if hasattr(prod, 'precio_costo') else 1000 * 1.19
-                precio_salida = precio_con_iva * 1.40
-
-                # Convertimos el objeto de base de datos a diccionario para compatibilidad con tu HTML
-                prod_temp = {
-                    'nombre': prod.nombre,
-                    'stock': prod.cantidad_actual,
-                    'precio': prod.precio_costo if hasattr(prod, 'precio_costo') else 1000,
-                    'precio_salida': int(precio_salida)
-                }
-                inventario_procesado.append(prod_temp)
-                
-    resultados = inventario_procesado
-    context = {'resultados': resultados}
-    return render(request, 'gestion/stock.html', context)
-
-# Historial y ganancias globales (puedes adaptarlas a modelos más adelante si lo deseas)
-HISTORIAL_VENTAS = []
-GANANCIAS_TOTALES = 0
-
-def vista_ventas(request):
-    global GANANCIAS_TOTALES
+@pyme_requerida
+def crear_producto(request):
     mensaje_error = ""
-    mensaje_exito = ""
+
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+
+        try:
+            cantidad = int(request.POST.get('cantidad', ''))
+            precio_costo = int(request.POST.get('precio_costo', ''))
+            precio_venta = int(request.POST.get('precio_venta', ''))
+        except ValueError:
+            mensaje_error = "La cantidad y los precios deben ser números enteros."
+        else:
+            if not nombre:
+                mensaje_error = "El nombre del producto es obligatorio."
+            elif cantidad < 0 or precio_costo < 0 or precio_venta < 0:
+                mensaje_error = "La cantidad y los precios no pueden ser negativos."
+            elif Producto.objects.filter(dueno=request.pyme, nombre__iexact=nombre).exists():
+                mensaje_error = f"Ya tienes un producto llamado '{nombre}'."
+            else:
+                Producto.objects.create(
+                    dueno=request.pyme,
+                    nombre=nombre,
+                    cantidad_actual=cantidad,
+                    precio_costo=precio_costo,
+                    precio_venta=precio_venta,
+                )
+                messages.success(request, f"Producto '{nombre}' creado.")
+                return redirect('menu')
+
+    return render(request, 'gestion/crear_producto.html', {
+        'mensaje_error': mensaje_error,
+        'datos': request.POST if request.method == 'POST' else {},
+    })
+
+
+@require_POST
+@pyme_requerida
+def eliminar_producto(request, producto_id):
+    # Solo se pueden eliminar productos de la PYME con sesión iniciada.
+    producto = get_object_or_404(Producto, id=producto_id, dueno=request.pyme)
+    nombre = producto.nombre
+    producto.delete()
+    messages.success(request, f"Producto '{nombre}' eliminado.")
+
+    destino = reverse('menu')
+    q = request.POST.get('q', '').strip()
+    if q:
+        destino += '?' + urlencode({'q': q})
+    return redirect(destino)
+
+
+@pyme_requerida
+def vista_stock(request):
+    productos = Producto.objects.filter(dueno=request.pyme).order_by('nombre')
+    return render(request, 'gestion/stock.html', {'resultados': productos})
+
+
+# ---------------------------------------------------------------- ventas
+
+def _buscar_producto_para_venta(pyme, texto):
+    """Devuelve (producto, error). Primero busca el nombre exacto; si no hay,
+    acepta una coincidencia parcial solo cuando es única."""
+    productos = Producto.objects.filter(dueno=pyme)
+
+    exacto = productos.filter(nombre__iexact=texto).first()
+    if exacto:
+        return exacto, ""
+
+    parciales = list(productos.filter(nombre__icontains=texto)[:2])
+    if len(parciales) == 1:
+        return parciales[0], ""
+    if len(parciales) > 1:
+        return None, f"Hay varios productos que coinciden con '{texto}'. Escribe el nombre completo."
+    return None, f"No se encontró el producto '{texto}'."
+
+
+@pyme_requerida
+def vista_ventas(request):
+    mensaje_error = ""
 
     if request.method == 'POST':
         accion = request.POST.get('accion')
-        
+
         if accion == 'borrar':
-            pass
-        elif accion == 'confirmar':
-            query = request.POST.get('q', '').strip()
-            cantidad_str = request.POST.get('cantidad', '0')
+            return redirect('ventas')
+
+        if accion == 'confirmar':
+            texto = request.POST.get('q', '').strip()
 
             try:
-                cantidad_a_vender = int(cantidad_str)
+                cantidad = int(request.POST.get('cantidad', '0'))
             except ValueError:
-                cantidad_a_vender = 0
+                cantidad = 0
 
-            pyme_id = request.session.get('pyme_id')
-            perfil_dueno = PerfilDueno.objects.filter(id=pyme_id).first() if pyme_id else None
-
-            if not query:
+            if not texto:
                 mensaje_error = "Debes ingresar el nombre de un producto."
-            elif cantidad_a_vender <= 0:
+            elif cantidad <= 0:
                 mensaje_error = "La cantidad a vender debe ser mayor a 0."
-            elif not perfil_dueno:
-                mensaje_error = "No hay una sesión de PYME activa."
             else:
-                # Buscamos el producto en la base de datos del usuario
-                producto_encontrado = Producto.objects.filter(dueno=perfil_dueno, nombre__icontains=query).first()
-                
-                if not producto_encontrado:
-                    mensaje_error = f"No se encontró el producto '{query}'."
-                elif producto_encontrado.cantidad_actual < cantidad_a_vender:
-                    mensaje_error = f"Stock insuficiente. Solo quedan {producto_encontrado.cantidad_actual} unds."
-                else:
-                    # Descontamos stock en la base de datos
-                    producto_encontrado.cantidad_actual -= cantidad_a_vender
-                    producto_encontrado.save()
-                    
-                    precio_base = producto_encontrado.precio_costo if hasattr(producto_encontrado, 'precio_costo') else 1000
-                    precio_con_iva = precio_base * 1.19
-                    precio_salida = precio_con_iva * 1.40
-                    ganancia_venta = int(precio_salida * cantidad_a_vender)
-                    
-                    GANANCIAS_TOTALES += ganancia_venta
+                producto, mensaje_error = _buscar_producto_para_venta(request.pyme, texto)
 
-                    HISTORIAL_VENTAS.append({
-                        'nombre': producto_encontrado.nombre,
-                        'cantidad': cantidad_a_vender,
-                        'precio_venta': int(precio_salida)
-                    })
-                    mensaje_exito = "¡Venta registrada con éxito!"
+                if producto:
+                    with transaction.atomic():
+                        # Se vuelve a leer con bloqueo para no vender stock que
+                        # otra petición acaba de descontar.
+                        producto = Producto.objects.select_for_update().get(pk=producto.pk)
 
-    context = {
-        'ventas': HISTORIAL_VENTAS,
-        'ganancias_totales': GANANCIAS_TOTALES,
+                        if producto.cantidad_actual < cantidad:
+                            mensaje_error = f"Stock insuficiente. Solo quedan {producto.cantidad_actual} unds."
+                        else:
+                            producto.cantidad_actual -= cantidad
+                            producto.save(update_fields=['cantidad_actual'])
+                            Venta.objects.create(
+                                pyme=request.pyme,
+                                producto=producto,
+                                nombre_producto=producto.nombre,
+                                cantidad=cantidad,
+                                precio_unitario=producto.precio_venta,
+                                ganancia=(producto.precio_venta - producto.precio_costo) * cantidad,
+                            )
+
+                    if not mensaje_error:
+                        messages.success(request, "¡Venta registrada con éxito!")
+                        return redirect('ventas')
+
+    ventas = Venta.objects.filter(pyme=request.pyme)
+    ganancias = ventas.aggregate(total=Sum('ganancia'))['total'] or 0
+
+    return render(request, 'gestion/ventas.html', {
+        'ventas': ventas,
+        'ganancias_totales': ganancias,
         'mensaje_error': mensaje_error,
-        'mensaje_exito': mensaje_exito
-    }
-    return render(request, 'gestion/ventas.html', context)
-
-def crear_producto(request):
-    mensaje_error = ""
-    
-    if request.method == 'POST':
-        nombre = request.POST.get('nombre')
-        cantidad = request.POST.get('cantidad')
-        precio_venta_str = request.POST.get('precio') # Capturamos el precio ingresado
-
-        pyme_id = request.session.get('pyme_id')
-        if not pyme_id:
-            primera_pyme = PerfilPyme.objects.first()
-            if primera_pyme:
-                pyme_id = primera_pyme.id
-                request.session['pyme_id'] = pyme_id
-            else:
-                mensaje_error = "No hay ninguna PYME registrada."
-
-        if not mensaje_error and (not nombre or not cantidad or not precio_venta_str):
-            mensaje_error = "Por favor completa todos los campos (el precio es obligatorio)."
-        elif not mensaje_error:
-            perfil_dueno, creado = PerfilDueno.objects.get_or_create(id=pyme_id)
-
-            try:
-                precio_venta = float(precio_venta_str)
-
-                # Creamos el producto guardando directamente el precio ingresado como precio_venta
-                Producto.objects.create(
-                    nombre=nombre,
-                    cantidad_actual=int(cantidad),
-                    precio_costo=precio_venta, # Opcional: si tu modelo exige precio_costo, le asignamos el mismo valor
-                    precio_venta=precio_venta, # ¡Aquí va el precio directo del usuario!
-                    dueno=perfil_dueno
-                )
-                
-                # Te redirige de vuelta al menú principal con el producto creado
-                return redirect('menu') 
-                
-            except ValueError:
-                mensaje_error = "La cantidad y el precio deben ser valores numéricos válidos."
-
-    context = {'mensaje_error': mensaje_error}
-    return render(request, 'gestion/crear_producto.html', context)
+    })

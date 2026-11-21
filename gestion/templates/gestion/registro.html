@@ -1,32 +1,39 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventaria - Registro</title>
-    <style>
-        body { background-color: #15233E; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: Arial, sans-serif; }
-        .contenedor-escritorio { background-color: white; padding: 50px 100px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; gap: 20px; width: 60%; max-width: 800px; }
-        h2 { color: #15233E; font-size: 3rem; margin: 0; margin-bottom: 10px; }
-        .input-oval { border: 2px solid #DDE3EC; border-radius: 50px; padding: 15px 30px; font-size: 1.2rem; width: 80%; outline: none; }
-        .btn-oval { background-color: #C9AB63; color: #15233E; padding: 15px 60px; border-radius: 50px; text-decoration: none; font-size: 1.5rem; border: none; font-weight: bold; cursor: pointer; transition: transform 0.2s; text-align: center; }
-        .btn-oval:hover { transform: scale(1.05); }
-        .btn-volver { background-color: #D5DBE5; padding: 10px 40px; font-size: 1.2rem; margin-top: 15px; }
-    </style>
-</head>
-<body>
-    <div class="contenedor-escritorio">
-        <form action="{% url 'registro' %}" method="POST" style="display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%;">
+{% extends 'gestion/base.html' %}
+
+{% block titulo %}Inventaria - Crear cuenta{% endblock %}
+
+{% block contenido %}
+<main class="pagina-auth">
+    <div class="tarjeta-auth">
+        <div class="marca">
+            <span class="marca-icono">{% include 'gestion/_marca_icono.html' %}</span>
+            <h1>Crear cuenta</h1>
+            <p>Registra tu PYME en Inventaria</p>
+        </div>
+
+        <div class="adorno"><span></span></div>
+
+        {% if mensaje_error %}
+            <div class="mensaje-error">{{ mensaje_error }}</div>
+        {% endif %}
+
+        <form action="{% url 'registro' %}" method="POST" class="formulario">
             {% csrf_token %}
-            <h2>Crear Cuenta</h2>
-            
-            <input type="text" name="nombre_pyme" class="input-oval" placeholder="Nombre de la PYME" required>
-            <input type="email" name="correo" class="input-oval" placeholder="Correo electrónico" required>
-            <input type="password" name="contrasena" class="input-oval" placeholder="Contraseña" required>
-            
-            <button type="submit" class="btn-oval">Registrar datos</button>
+            <label for="nombre_pyme">Nombre de la PYME</label>
+            <input type="text" id="nombre_pyme" name="nombre_pyme" placeholder="Ej. Almacén Don Pepe" value="{{ nombre_pyme }}" required>
+
+            <label for="correo">Correo electrónico</label>
+            <input type="email" id="correo" name="correo" placeholder="tucorreo@ejemplo.cl" value="{{ correo }}" autocomplete="username" required>
+
+            <label for="contrasena">Contraseña</label>
+            <input type="password" id="contrasena" name="contrasena" placeholder="Crea una contraseña" autocomplete="new-password" required>
+
+            <button type="submit" class="btn">Registrar datos</button>
         </form>
-        <a href="{% url 'inicio' %}" class="btn-oval btn-volver">Volver al inicio</a>
+
+        <div class="pie-auth">
+            <a href="{% url 'inicio' %}" class="btn btn-borde">Volver al inicio</a>
+        </div>
     </div>
-</body>
-</html>
+</main>
+{% endblock %}

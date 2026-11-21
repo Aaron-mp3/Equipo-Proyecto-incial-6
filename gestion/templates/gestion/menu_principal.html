@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventaria - Productos</title>
     <style>
-        body { background-color: #15233E; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: Arial, sans-serif; }
+        body { background-color: #15233E; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; font-family: Arial, sans-serif; }
         .contenedor-escritorio { background-color: white; padding: 60px 100px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; gap: 40px; width: 70%; max-width: 1000px; }
         .buscador-container { display: flex; gap: 15px; width: 100%; justify-content: center; }
         .input-oval { border: 2px solid #DDE3EC; border-radius: 50px; padding: 15px 30px; font-size: 1.5rem; width: 70%; outline: none; }
         .btn-oval { background-color: #C9AB63; color: #15233E; padding: 15px 40px; border-radius: 50px; text-decoration: none; font-size: 1.5rem; border: none; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
         .btn-oval:hover { transform: scale(1.05); }
+        .btn-eliminar { background-color: #D24C49; color: #fff; padding: 8px 20px; border-radius: 50px; border: none; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        .btn-eliminar:hover { background-color: #b83d3a; }
     </style>
 </head>
 <body>
@@ -19,6 +21,10 @@
             <input type="text" name="q" class="input-oval" placeholder="Buscar producto..." value="{{ query }}">
             <button type="submit" class="btn-oval">Buscar</button>
         </form>
+
+        {% for mensaje in messages %}
+            <p style="color: #3E9B5F; font-size: 1.3rem; font-weight: bold; margin: 0;">{{ mensaje }}</p>
+        {% endfor %}
 
         {% if mensaje_error %}
             <p style="color: #D24C49; font-size: 1.5rem; font-weight: bold; margin: 0;">{{ mensaje_error }}</p>
@@ -30,15 +36,26 @@
                     <th style="padding: 15px;">Producto</th>
                     <th style="padding: 15px;">Stock</th>
                     <th style="padding: 15px;">Precio</th>
+                    <th style="padding: 15px;"></th>
                 </tr>
                 {% for producto in resultados %}
                 <tr style="border-bottom: 2px solid #DDE3EC;">
                     <td style="padding: 15px;">{{ producto.nombre }}</td>
-                    <td style="padding: 15px;">{{ producto.stock }} unidades</td>
-                    <td style="padding: 15px;">${{ producto.precio }}</td>
+                    <td style="padding: 15px;">{{ producto.cantidad_actual }} unidades</td>
+                    <td style="padding: 15px;">${{ producto.precio_venta }}</td>
+                    <td style="padding: 15px;">
+                        <form method="POST" action="{% url 'eliminar_producto' producto.id %}" style="margin: 0;"
+                              onsubmit="return confirm('¿Eliminar el producto &quot;{{ producto.nombre|escapejs }}&quot;? Esta acción no se puede deshacer.');">
+                            {% csrf_token %}
+                            <input type="hidden" name="q" value="{{ query }}">
+                            <button type="submit" class="btn-eliminar">Eliminar</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </table>
+        {% elif not query %}
+            <p style="color: #6B7790; font-size: 1.3rem; margin: 0;">Aún no tienes productos. ¡Crea el primero!</p>
         {% endif %}
 
         <div style="display: flex; gap: 20px; margin-top: 20px;">

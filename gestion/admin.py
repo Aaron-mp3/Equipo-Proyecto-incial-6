@@ -1,8 +1,6 @@
-
-# Register your models here.
 from django.contrib import admin
-from .models import PerfilDueno, Producto, PerfilPyme
+from .models import PerfilPyme, Producto, Venta
 
-admin.site.register(PerfilDueno)
-admin.site.register(Producto)
 admin.site.register(PerfilPyme)
+admin.site.register(Producto)
+admin.site.register(Venta)

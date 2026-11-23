@@ -493,3 +493,107 @@ a.cal-dia:hover { transform: translateY(-3px); border-color: var(--dorado); }
 .modo-celular .tabla th,
 .modo-celular .tabla td { padding: 10px 6px; font-size: 0.88rem; letter-spacing: 0; }
 .modo-celular .tabla th { font-size: 0.7rem; }
+
+/* ================================================== Barra: logo, lema y reloj */
+.barra { flex-wrap: wrap; padding: 10px 32px; }
+.barra-marca { flex-direction: column; align-items: center; gap: 3px; font-size: 1rem; flex: none; }
+.barra-logo { display: block; height: 66px; width: auto; }
+.barra-empresa { font-family: var(--fuente-texto); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dorado-claro); white-space: nowrap; }
+
+.barra-lema {
+    flex: 1 1 260px;
+    margin: 0;
+    padding: 0 12px;
+    text-align: center;
+    font-family: var(--fuente-titulos);
+    font-weight: 700;
+    font-size: 1.2rem;
+    line-height: 1.3;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--dorado);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+.barra-derecha { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: none; }
+.reloj { display: flex; align-items: baseline; gap: 10px; color: var(--dorado-claro); font-size: 0.85rem; line-height: 1.2; }
+.reloj-hora { font-family: var(--fuente-titulos); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.06em; color: var(--dorado); font-variant-numeric: tabular-nums; }
+
+/* Tablet y celular: fila 1 = logo + usuario; fila 2 = lema; fila 3 = fecha y hora */
+@media (max-width: 900px) {
+    .barra { row-gap: 8px; }
+    .barra-derecha { display: contents; }
+    .barra-usuario { order: 2; margin-left: auto; }
+    .barra-lema { order: 3; flex: 1 1 100%; padding: 8px 4px 0; font-size: 1.05rem; line-height: 1.35; border-top: 1px solid rgba(217, 169, 63, 0.28); }
+    .reloj { order: 4; flex: 1 1 100%; justify-content: center; align-items: baseline; gap: 14px; padding: 6px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); font-size: 0.95rem; }
+    .reloj-hora { font-size: 1.3rem; }
+}
+@media (max-width: 600px) {
+    .barra { padding: 10px 14px 12px; }
+    .barra-logo { height: 76px; }
+    .barra-empresa { font-size: 0.58rem; letter-spacing: 0.16em; }
+    .barra-lema { font-size: 0.98rem; letter-spacing: 0.02em; }
+    .reloj { flex-wrap: wrap; gap: 2px 12px; font-size: 0.9rem; }
+    .reloj-hora { font-size: 1.25rem; }
+}
+.modo-celular .barra { flex-wrap: wrap; row-gap: 8px; padding: 10px 14px 12px; }
+.modo-celular .barra-derecha { display: contents; }
+.modo-celular .barra-usuario { order: 2; margin-left: auto; }
+.modo-celular .barra-logo { height: 76px; }
+.modo-celular .barra-marca { font-size: 1rem; }
+.modo-celular .barra-empresa { font-size: 0.58rem; letter-spacing: 0.16em; }
+.modo-celular .barra-lema { order: 3; flex: 1 1 100%; padding: 8px 4px 0; font-size: 0.98rem; line-height: 1.35; letter-spacing: 0.02em; border-top: 1px solid rgba(217, 169, 63, 0.28); }
+.modo-celular .reloj { order: 4; flex: 1 1 100%; justify-content: center; flex-wrap: wrap; gap: 2px 12px; padding: 6px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); font-size: 0.9rem; }
+.modo-celular .reloj-hora { font-size: 1.25rem; }
+
+/* ================================================== Tarjeta de Excel (dashboard) */
+.tarjeta-form { display: contents; }
+.tarjeta-archivo { cursor: pointer; }
+.tarjeta-archivo:focus-within { transform: translateY(-10px); box-shadow: 0 0 0 4px var(--dorado-claro), var(--sombra-fuerte); }
+.solo-lectores { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; pointer-events: none; }
+
+/* ================================================== Lector de Excel */
+.excel-form { max-width: 520px; }
+.excel-archivo { margin: 4px 0 18px; color: var(--gris); }
+.excel-hoja { margin-bottom: 30px; }
+.excel-hoja h3 { font-size: 1.35rem; margin-bottom: 4px; }
+.excel-info { margin: 0 0 10px; color: var(--gris); font-size: 0.92rem; }
+.excel-aviso { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: 999px; background: #FFF4D6; color: #7A5A12; font-weight: 600; }
+.excel-wrap { max-height: 560px; overflow: auto; }
+.excel-tabla { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 0.9rem; }
+.excel-tabla th, .excel-tabla td { padding: 7px 12px; border-right: 1px solid #E4E8EF; border-bottom: 1px solid #E4E8EF; text-align: left; white-space: nowrap; max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+.excel-tabla thead th { position: sticky; top: 0; z-index: 2; background: var(--azul); color: var(--dorado-claro); text-align: center; font-weight: 700; letter-spacing: 0.05em; }
+.excel-tabla .num-fila, .excel-tabla .esquina { position: sticky; left: 0; z-index: 1; background: #EEF1F6; color: var(--gris); text-align: center; font-weight: 600; min-width: 44px; }
+.excel-tabla thead .esquina { z-index: 3; background: var(--azul); }
+.excel-tabla td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.excel-tabla tbody tr:nth-child(even) td { background: #FAFBFD; }
+.excel-tabla tbody tr:hover td { background: #FFF8E4; }
+
+/* ================================================== Cargar productos desde Excel */
+.importar { margin-top: 18px; padding: 18px 20px 20px; border: 1px solid #E6D9B5; border-radius: 14px; background: #FFFCF3; }
+.importar h4 { margin: 0 0 8px; font-family: var(--fuente-titulos); font-size: 1.15rem; color: var(--dorado-oscuro); }
+.importar-resumen { margin: 0 0 12px; line-height: 1.55; }
+.importar-aviso { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: #E8EEF9; color: var(--azul); font-weight: 600; font-size: 0.85rem; }
+.importar-nota { margin: 6px 0; color: var(--gris); font-size: 0.92rem; }
+.importar-errores { margin: 14px 0 0; padding: 10px 14px; border-radius: 10px; background: #FDEDEC; color: #8F2E2B; font-size: 0.9rem; }
+.importar-errores p { margin: 0 0 4px; }
+.importar-errores ul { margin: 0; padding-left: 20px; }
+.importar-form { margin-top: 16px; }
+.chip { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; }
+.chip-nuevo { background: #E2F4E8; color: #25663F; }
+.chip-suma { background: #E8EEF9; color: var(--azul); }
+.modo-celular .importar { padding: 14px; }
+
+/* Celulares angostos (360 px o menos): que el usuario quede en la misma fila que el logo */
+@media (max-width: 380px) {
+    .barra, .modo-celular .barra { column-gap: 6px; }
+    .perfil-enlace, .modo-celular .perfil-enlace { padding-right: 2px; }
+    .barra-logo, .modo-celular .barra-logo { height: 60px; }
+    .barra-usuario, .modo-celular .barra-usuario { gap: 8px; }
+    .barra-usuario .btn, .modo-celular .barra-usuario .btn { padding: 8px 12px; font-size: 0.85rem; }
+    .barra-lema, .modo-celular .barra-lema { font-size: 0.9rem; }
+}
+
+/* ================================================== Logo en bienvenida, inicio de sesión y registro */
+.marca-logo { display: block; width: min(250px, 72%); height: auto; margin: 0 auto 8px; }
+.modo-celular .marca-logo { width: min(230px, 70%); }

@@ -116,11 +116,42 @@
             <span class="tarjeta-ir">Ver gráficas</span>
         </a>
 
+        <form action="{% url 'excel' %}" method="POST" enctype="multipart/form-data" class="tarjeta-form" id="form-excel">
+            {% csrf_token %}
+            <label class="tarjeta tarjeta-archivo" style="--i: 5;">
+                <input type="file" name="archivo" id="archivo-excel" class="solo-lectores"
+                       accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+                <div class="tarjeta-icono">
+                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+                        <rect x="6" y="7" width="36" height="34" rx="3.5"/>
+                        <path d="M6 16h36M6 25h36M6 33h36M18 16v25M30 16v25"/>
+                        <path d="M9 11.5h6" stroke-width="3"/>
+                    </svg>
+                </div>
+                <h2>Excel</h2>
+                <p class="tarjeta-desc">Sube un Excel, míralo como tabla y carga tus productos al inventario.</p>
+                <div class="tarjeta-dato">
+                    <strong>.xlsx</strong>
+                    <span>libros de Excel admitidos</span>
+                </div>
+                <span class="tarjeta-ir">Subir archivo</span>
+            </label>
+        </form>
+
     </section>
 </main>
 {% endblock %}
 
 {% block scripts %}
+<script>
+    // Al elegir un archivo en la tarjeta Excel, se envía solo.
+    (function () {
+        var entrada = document.getElementById('archivo-excel');
+        if (entrada) entrada.addEventListener('change', function () {
+            if (entrada.files.length) document.getElementById('form-excel').submit();
+        });
+    })();
+</script>
 <script>
     // Los números "suben" hasta su valor al cargar. Sin JavaScript se ven igual, sin animación.
     (function () {

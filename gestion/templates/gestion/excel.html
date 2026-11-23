@@ -1,0 +1,128 @@
+{% extends 'gestion/base.html' %}
+
+{% block titulo %}Inventaria - Lector de Excel{% endblock %}
+
+{% block contenido %}
+{% include 'gestion/_barra.html' %}
+
+<main class="panel">
+    <div class="contenedor">
+        <div class="encabezado-seccion">
+            <div>
+                <h2>Lector de Excel</h2>
+                <p class="subtitulo">Sube un archivo .xlsx, míralo como tabla y carga sus productos al inventario.</p>
+            </div>
+        </div>
+
+        {% for mensaje in messages %}
+            <div class="{% if mensaje.tags == 'error' %}mensaje-error{% else %}mensaje-exito{% endif %}">{{ mensaje }}</div>
+        {% endfor %}
+        {% if error %}<div class="mensaje-error">{{ error }}</div>{% endif %}
+
+        <form method="POST" action="{% url 'excel' %}" enctype="multipart/form-data" class="formulario excel-form">
+            {% csrf_token %}
+            <label for="archivo">Archivo de Excel (.xlsx)</label>
+            <input type="file" id="archivo" name="archivo" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+            <p class="ayuda">Máximo {{ max_mb }} MB. El archivo no se guarda ni se modifica. Para cargar productos, su primera fila debe tener: Producto, Cantidad, Precio compra y Precio venta.</p>
+            <button type="submit" class="btn">Subir y leer</button>
+        </form>
+
+        {% if libro %}
+            <div class="adorno" style="margin: 30px 0 10px;"><span></span></div>
+            <p class="excel-archivo">Archivo: <strong>{{ nombre_archivo }}</strong></p>
+
+            {% for hoja in libro.hojas %}
+            <section class="excel-hoja">
+                <h3>{{ hoja.nombre }}</h3>
+                {% if hoja.filas %}
+                <p class="excel-info">
+                    {{ hoja.total_filas }} fila{{ hoja.total_filas|pluralize }} · {{ hoja.total_columnas }} columna{{ hoja.total_columnas|pluralize }}
+                    {% if hoja.truncada %}<span class="excel-aviso">Se muestran solo las primeras {{ hoja.filas|length }} filas y {{ hoja.columnas }} columnas.</span>{% endif %}
+                </p>
+                <div class="tabla-wrap excel-wrap">
+                    <table class="excel-tabla">
+                        <thead>
+                            <tr>
+                                <th class="esquina"></th>
+                                {% for letra in hoja.letras %}<th>{{ letra }}</th>{% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fila in hoja.filas %}
+                            <tr>
+                                <th class="num-fila">{{ forloop.counter }}</th>
+                                {% for celda in fila %}<td{% if celda.1 %} class="num"{% endif %}>{{ celda.0 }}</td>{% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="excel-info">Esta hoja está vacía.</p>
+                {% endif %}
+                <div class="importar">
+                    <h4>Cargar al inventario</h4>
+                    {% if hoja.importar.ok %}
+                        <p class="importar-resumen">
+                            <strong>{{ hoja.importar.nuevos }}</strong> producto{{ hoja.importar.nuevos|pluralize }} nuevo{{ hoja.importar.nuevos|pluralize }}
+                            · <strong>{{ hoja.importar.existentes }}</strong> ya existe{{ hoja.importar.existentes|pluralize:"n" }}.
+                            En los que ya existen se <b>suma la cantidad</b> al stock y se <b>actualizan los precios</b>.
+                            <span class="importar-aviso">Aún no se ha guardado nada.</span>
+                        </p>
+                        <div class="tabla-wrap">
+                            <table class="tabla" style="min-width: 0;">
+                                <thead>
+                                    <tr><th>Producto</th><th>Qué pasará</th><th>Cantidad</th><th>P. compra</th><th>P. venta</th><th>Stock final</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for f in hoja.importar.filas %}
+                                    <tr>
+                                        <td class="nombre">{{ f.nombre }}{% if f.repeticiones > 1 %} <small>({{ f.repeticiones }} filas sumadas)</small>{% endif %}</td>
+                                        <td>{% if f.accion == 'nuevo' %}<span class="chip chip-nuevo">Nuevo</span>{% else %}<span class="chip chip-suma">Suma al stock</span>{% endif %}</td>
+                                        <td>{{ f.cantidad }}</td>
+                                        <td>{{ f.costo }}</td>
+                                        <td>{{ f.venta }}</td>
+                                        <td>{{ f.stock_final }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if hoja.importar.errores %}
+                            <div class="importar-errores">
+                                <p><strong>{{ hoja.importar.errores|length }}</strong> fila{{ hoja.importar.errores|length|pluralize }} no se cargará{{ hoja.importar.errores|length|pluralize:"n" }}:</p>
+                                <ul>
+                                    {% for fila, motivo in hoja.importar.errores %}<li>Fila {{ fila }}: {{ motivo }}</li>{% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                        <form method="POST" action="{% url 'excel' %}" class="importar-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="accion" value="confirmar">
+                            <input type="hidden" name="hoja" value="{{ hoja.indice }}">
+                            <button type="submit" class="btn">Confirmar carga</button>
+                        </form>
+                    {% else %}
+                        <p class="importar-nota">{{ hoja.importar.motivo }}</p>
+                        {% if hoja.importar.errores %}
+                            <div class="importar-errores">
+                                <ul>{% for fila, motivo in hoja.importar.errores %}<li>Fila {{ fila }}: {{ motivo }}</li>{% endfor %}</ul>
+                            </div>
+                        {% endif %}
+                        <p class="importar-nota">Para cargar productos, la primera fila debe tener las columnas <b>Producto, Cantidad, Precio compra y Precio venta</b>.</p>
+                    {% endif %}
+                </div>
+            </section>
+            {% endfor %}
+
+            {% if libro.hojas_omitidas %}
+                <p class="excel-info">El libro tiene {{ libro.hojas_omitidas }} hoja{{ libro.hojas_omitidas|pluralize }} más que no se muestran aquí.</p>
+            {% endif %}
+        {% endif %}
+
+        <div class="pie-botones">
+            <a href="{% url 'dashboard' %}" class="btn btn-borde">Volver al dashboard</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

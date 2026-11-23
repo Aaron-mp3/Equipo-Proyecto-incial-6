@@ -1,4 +1,5 @@
 {% extends 'gestion/base.html' %}
+{% load static %}
 
 {% block titulo %}Inventaria - Inicio de sesión{% endblock %}
 
@@ -6,8 +7,8 @@
 <main class="pagina-auth">
     <div class="tarjeta-auth">
         <div class="marca">
-            <span class="marca-icono">{% include 'gestion/_marca_icono.html' %}</span>
-            <h1>Inventaria</h1>
+            <img class="marca-logo" src="{% static 'gestion/img/logo.png' %}?v=2" alt="Inventaria">
+            <h1 class="solo-lectores">Inventaria</h1>
             <p>Gestión de inventario para tu PYME</p>
         </div>
 

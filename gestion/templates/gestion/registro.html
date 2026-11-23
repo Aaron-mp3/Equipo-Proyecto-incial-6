@@ -1,4 +1,5 @@
 {% extends 'gestion/base.html' %}
+{% load static %}
 
 {% block titulo %}Inventaria - Crear cuenta{% endblock %}
 
@@ -6,7 +7,7 @@
 <main class="pagina-auth">
     <div class="tarjeta-auth">
         <div class="marca">
-            <span class="marca-icono">{% include 'gestion/_marca_icono.html' %}</span>
+            <img class="marca-logo" src="{% static 'gestion/img/logo.png' %}?v=2" alt="Inventaria">
             <h1>Crear cuenta</h1>
             <p>Registra tu PYME en Inventaria</p>
         </div>

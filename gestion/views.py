@@ -18,12 +18,14 @@ from django.utils.crypto import constant_time_compare, salted_hmac
 from django.views.decorators.http import require_POST
 
 from . import estadisticas as est
+from . import importar_productos, lector_excel
 from .models import PerfilPyme, Producto, Venta
 
 # Un producto se marca como "stock bajo" cuando le quedan estas unidades o menos.
 UMBRAL_STOCK_BAJO = 5
 
 MAX_FOTO_BYTES = 2 * 1024 * 1024  # 2 MB
+MAX_EXCEL_BYTES = 5 * 1024 * 1024  # 5 MB
 
 
 # ------------------------------------------------------------- sesión
@@ -627,3 +629,111 @@ def perfil(request):
         'datos': datos,
         'errores': errores,
     })
+
+
+# ------------------------------------------------------------- lector de Excel
+
+CLAVE_IMPORTACION = 'importacion_excel'
+
+
+def _existentes_de(pyme):
+    """{nombre normalizado: cantidad actual} de los productos de la PYME."""
+    return {importar_productos.clave_nombre(n): c
+            for n, c in Producto.objects.filter(dueno=pyme).values_list('nombre', 'cantidad_actual')}
+
+
+def _preparar_importacion(request, libro):
+    """Analiza cada hoja y guarda en la sesión lo que se podría cargar (nada se guarda en la base todavía)."""
+    existentes = _existentes_de(request.pyme)
+    guardado = {}
+    for indice, hoja in enumerate(libro['hojas']):
+        analisis = importar_productos.analizar_hoja(hoja)
+        hoja['indice'] = indice
+        hoja['importar'] = {'ok': analisis['ok'], 'motivo': analisis['motivo'], 'errores': analisis['errores']}
+        if analisis['ok']:
+            vista = importar_productos.previsualizar(analisis['filas'], existentes)
+            hoja['importar'].update(
+                filas=vista,
+                nuevos=sum(1 for f in vista if f['accion'] == 'nuevo'),
+                existentes=sum(1 for f in vista if f['accion'] == 'suma'),
+            )
+            guardado[str(indice)] = [[f['nombre'], f['cantidad'], f['costo'], f['venta']] for f in vista]
+    if guardado:
+        request.session[CLAVE_IMPORTACION] = guardado
+    else:
+        request.session.pop(CLAVE_IMPORTACION, None)
+
+
+def _confirmar_importacion(request):
+    """Carga a la base los productos de la hoja elegida: suma stock a los existentes y crea los nuevos."""
+    guardado = request.session.get(CLAVE_IMPORTACION) or {}
+    filas = guardado.get(request.POST.get('hoja', ''))
+    if not filas:
+        messages.error(request, "La vista previa venció. Sube el archivo de nuevo para volver a revisarlo.")
+        return redirect('excel')
+
+    nuevos = actualizados = 0
+    omitidos = []
+    with transaction.atomic():
+        existentes = {importar_productos.clave_nombre(p.nombre): p
+                      for p in Producto.objects.select_for_update().filter(dueno=request.pyme)}
+        for nombre, cantidad, costo, venta in filas:
+            producto = existentes.get(importar_productos.clave_nombre(nombre))
+            if producto is None:
+                Producto.objects.create(dueno=request.pyme, nombre=nombre, cantidad_actual=cantidad,
+                                        precio_costo=costo, precio_venta=venta)
+                nuevos += 1
+            elif producto.cantidad_actual + cantidad > importar_productos.MAX_INT_BD:
+                omitidos.append(nombre)
+            else:
+                Producto.objects.filter(pk=producto.pk).update(
+                    cantidad_actual=F('cantidad_actual') + cantidad, precio_costo=costo, precio_venta=venta)
+                actualizados += 1
+
+    request.session.pop(CLAVE_IMPORTACION, None)
+    partes = []
+    if nuevos:
+        partes.append(f"{nuevos} producto{'s' if nuevos != 1 else ''} nuevo{'s' if nuevos != 1 else ''}")
+    if actualizados:
+        partes.append(f"{actualizados} actualizado{'s' if actualizados != 1 else ''} (stock sumado y precios al día)")
+    messages.success(request, "Carga lista: " + ", ".join(partes) + "." if partes else "No se cargó ningún producto.")
+    if omitidos:
+        messages.error(request, "No se pudo sumar el stock de: " + ", ".join(omitidos) + " (superaría el máximo permitido).")
+    return redirect('excel')
+
+
+@pyme_requerida
+def lector_excel_vista(request):
+    """Sube un .xlsx y lo muestra como tabla; permite cargar sus productos al inventario.
+
+    El archivo se lee en memoria y NO se guarda. Cargar productos requiere confirmar la vista previa.
+    """
+    if request.method == 'POST' and request.POST.get('accion') == 'confirmar':
+        return _confirmar_importacion(request)
+
+    contexto = {'nombre_archivo': '', 'error': '', 'libro': None, 'max_mb': MAX_EXCEL_BYTES // (1024 * 1024)}
+
+    if request.method == 'POST':
+        archivo = request.FILES.get('archivo')
+        if archivo is None:
+            contexto['error'] = "Elige un archivo de Excel para subir."
+        else:
+            nombre = archivo.name or ''
+            contexto['nombre_archivo'] = nombre
+            if not nombre.lower().endswith('.xlsx'):
+                contexto['error'] = ("Solo se pueden leer archivos .xlsx. Si tu archivo es .xls o .csv, "
+                                     "ábrelo en Excel y usa «Guardar como» → «Libro de Excel (.xlsx)».")
+            elif archivo.size > MAX_EXCEL_BYTES:
+                contexto['error'] = f"El archivo pesa más de {MAX_EXCEL_BYTES // (1024 * 1024)} MB."
+            else:
+                try:
+                    libro = lector_excel.leer_xlsx(archivo)
+                except lector_excel.ErrorExcel as error:
+                    contexto['error'] = str(error)
+                else:
+                    _preparar_importacion(request, libro)
+                    contexto['libro'] = libro
+        if contexto['libro'] is None:
+            request.session.pop(CLAVE_IMPORTACION, None)
+
+    return render(request, 'gestion/excel.html', contexto)

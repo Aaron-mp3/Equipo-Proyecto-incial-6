@@ -1,20 +1,48 @@
+{% load static %}
 <header class="barra">
-    <a href="{% url 'dashboard' %}" class="barra-marca">
-        {% include 'gestion/_marca_icono.html' %}
-        Inventaria
+    <a href="{% url 'dashboard' %}" class="barra-marca" aria-label="Inventaria, ir al dashboard">
+        <img src="{% static 'gestion/img/logo.png' %}?v=2" alt="Inventaria" class="barra-logo">
+        <span class="barra-empresa">Pico, Pala y Python</span>
     </a>
-    <div class="barra-usuario">
-        <a href="{% url 'perfil' %}" class="perfil-enlace" title="Mi perfil">
-            {% include 'gestion/_avatar.html' with pyme=request.pyme %}
-            <span>{{ request.pyme.nombre_pyme }}</span>
-        </a>
-        {% if request.resolver_match.url_name != 'dashboard' %}
-            <a href="{% url 'dashboard' %}" class="btn btn-claro">← Dashboard</a>
+
+    <p class="barra-lema">¡Cada venta anotada es una ganancia asegurada!</p>
+
+    <div class="barra-derecha">
+        <div class="barra-usuario">
+            <a href="{% url 'perfil' %}" class="perfil-enlace" title="Mi perfil">
+                {% include 'gestion/_avatar.html' with pyme=request.pyme %}
+                <span>{{ request.pyme.nombre_pyme }}</span>
+            </a>
+            {% if request.resolver_match.url_name != 'dashboard' %}
+                <a href="{% url 'dashboard' %}" class="btn btn-claro">← Dashboard</a>
+            {% endif %}
+            <form action="{% url 'cerrar_sesion' %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-claro">Cerrar sesión</button>
+            </form>
+        </div>
+
+        {% if request.resolver_match.url_name == 'dashboard' %}
+        <div class="reloj" aria-label="Fecha y hora actuales">
+            <span class="reloj-fecha" id="reloj-fecha">{% now "d/m/Y" %}</span>
+            <span class="reloj-hora" id="reloj-hora">{% now "H:i:s" %}</span>
+        </div>
+        <script>
+            // Fecha y hora actuales de tu dispositivo, actualizadas cada segundo.
+            (function () {
+                var f = document.getElementById('reloj-fecha'), h = document.getElementById('reloj-hora');
+                if (!f || !h) return;
+                function pintar() {
+                    var ahora = new Date();
+                    var fecha = ahora.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    f.textContent = fecha.charAt(0).toUpperCase() + fecha.slice(1);
+                    h.textContent = ahora.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+                }
+                pintar();
+                setInterval(pintar, 1000);
+            })();
+        </script>
         {% endif %}
-        <form action="{% url 'cerrar_sesion' %}" method="POST">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-claro">Cerrar sesión</button>
-        </form>
     </div>
 </header>
 {% include 'gestion/_menu_inferior.html' %}

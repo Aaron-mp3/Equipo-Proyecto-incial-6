@@ -408,3 +408,183 @@ class DispositivoTests(TestCase):
         self.client.post(reverse('inicio'), {'correo': 'a@a.cl', 'contrasena': 'clave123'})
         self.assertRedirects(self.client.post(reverse('cerrar_sesion')), reverse('bienvenida'))
         self.assertRedirects(self.client.get(reverse('dashboard')), reverse('inicio'))
+
+
+# ------------------------------------------------------------ barra y lector de Excel
+
+import io
+import zipfile
+from xml.sax.saxutils import escape
+
+from . import lector_excel
+
+
+def crear_xlsx_minimo(filas):
+    """Arma un .xlsx mínimo solo con la biblioteca estándar (sin openpyxl)."""
+    columnas = 'ABCDEFGH'
+    celdas = []
+    for n, fila in enumerate(filas, start=1):
+        partes = []
+        for i, valor in enumerate(fila):
+            ref = f'{columnas[i]}{n}'
+            if isinstance(valor, (int, float)):
+                partes.append(f'<c r="{ref}"><v>{valor}</v></c>')
+            else:
+                partes.append(f'<c r="{ref}" t="inlineStr"><is><t>{escape(valor)}</t></is></c>')
+        celdas.append(f'<row r="{n}">{"".join(partes)}</row>')
+    ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+    rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+    bio = io.BytesIO()
+    with zipfile.ZipFile(bio, 'w') as z:
+        z.writestr('[Content_Types].xml', '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>')
+        z.writestr('xl/workbook.xml', f'<?xml version="1.0"?><workbook xmlns="{ns}" xmlns:r="{rel}"><sheets><sheet name="Inventario" sheetId="1" r:id="rId1"/></sheets></workbook>')
+        z.writestr('xl/_rels/workbook.xml.rels', '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="worksheet" Target="worksheets/sheet1.xml"/></Relationships>')
+        z.writestr('xl/worksheets/sheet1.xml', f'<?xml version="1.0"?><worksheet xmlns="{ns}"><sheetData>{"".join(celdas)}</sheetData></worksheet>')
+    return bio.getvalue()
+
+
+class LectorExcelTests(TestCase):
+    def setUp(self):
+        crear_pyme()
+        self.client.post(reverse('inicio'), {'correo': 'a@a.cl', 'contrasena': 'clave123'})
+
+    def test_parser_lee_textos_y_numeros(self):
+        datos = crear_xlsx_minimo([['Producto', 'Cantidad'], ['Café', 12], ['Té <b>', 3.5]])
+        hoja = lector_excel.leer_xlsx(io.BytesIO(datos))['hojas'][0]
+        self.assertEqual(hoja['nombre'], 'Inventario')
+        self.assertEqual(hoja['filas'][0][0], ('Producto', False))
+        self.assertEqual(hoja['filas'][1][1], ('12', True))
+        self.assertEqual(hoja['filas'][2][1], ('3,5', True))
+
+    def test_parser_rechaza_archivos_que_no_son_xlsx(self):
+        with self.assertRaises(lector_excel.ErrorExcel):
+            lector_excel.leer_xlsx(io.BytesIO(b'a,b\n1,2\n'))
+
+    def test_pagina_requiere_sesion(self):
+        respuesta = Client().get(reverse('excel'))
+        self.assertEqual(respuesta.status_code, 302)
+
+    def test_subir_xlsx_muestra_la_tabla(self):
+        archivo = SimpleUploadedFile('inv.xlsx', crear_xlsx_minimo([['Producto', 'Cantidad'], ['Café molido', 12]]))
+        respuesta = self.client.post(reverse('excel'), {'archivo': archivo})
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, 'Café molido')
+        self.assertContains(respuesta, 'Inventario')
+
+    def test_texto_del_excel_se_escapa(self):
+        archivo = SimpleUploadedFile('x.xlsx', crear_xlsx_minimo([['<script>alert(1)</script>']]))
+        respuesta = self.client.post(reverse('excel'), {'archivo': archivo})
+        self.assertNotContains(respuesta, '<script>alert(1)</script>')
+
+    def test_rechaza_extension_distinta(self):
+        archivo = SimpleUploadedFile('datos.csv', b'a,b\n1,2\n')
+        respuesta = self.client.post(reverse('excel'), {'archivo': archivo})
+        self.assertContains(respuesta, 'Solo se pueden leer archivos .xlsx')
+
+    def test_rechaza_xlsx_falso(self):
+        archivo = SimpleUploadedFile('falso.xlsx', b'no soy un excel')
+        respuesta = self.client.post(reverse('excel'), {'archivo': archivo})
+        self.assertContains(respuesta, 'no es un libro de Excel')
+
+    def test_rechaza_archivo_muy_grande(self):
+        grande = SimpleUploadedFile('grande.xlsx', b'0' * (5 * 1024 * 1024 + 1))
+        respuesta = self.client.post(reverse('excel'), {'archivo': grande})
+        self.assertContains(respuesta, 'pesa más de 5 MB')
+
+    def test_post_sin_archivo(self):
+        respuesta = self.client.post(reverse('excel'), {})
+        self.assertContains(respuesta, 'Elige un archivo')
+
+
+class BarraTests(TestCase):
+    def setUp(self):
+        crear_pyme()
+        self.client.post(reverse('inicio'), {'correo': 'a@a.cl', 'contrasena': 'clave123'})
+
+    def test_dashboard_muestra_reloj_lema_empresa_y_tarjeta_excel(self):
+        respuesta = self.client.get(reverse('dashboard'))
+        self.assertContains(respuesta, 'id="reloj-hora"')
+        self.assertContains(respuesta, '¡Cada venta anotada es una ganancia asegurada!')
+        self.assertContains(respuesta, 'Pico, Pala y Python')
+        self.assertContains(respuesta, 'gestion/img/logo.png')
+        self.assertContains(respuesta, 'id="archivo-excel"')
+
+    def test_el_reloj_solo_aparece_en_el_dashboard(self):
+        respuesta = self.client.get(reverse('ventas'))
+        self.assertNotContains(respuesta, 'id="reloj-hora"')
+        self.assertContains(respuesta, 'Pico, Pala y Python')
+
+
+class ImportarProductosTests(TestCase):
+    ENCABEZADO = ['Producto', 'Cantidad', 'Precio compra', 'Precio venta']
+
+    def setUp(self):
+        self.pyme = crear_pyme()
+        self.client.post(reverse('inicio'), {'correo': 'a@a.cl', 'contrasena': 'clave123'})
+
+    def subir(self, filas, nombre='productos.xlsx'):
+        return self.client.post(reverse('excel'), {'archivo': SimpleUploadedFile(nombre, crear_xlsx_minimo(filas))})
+
+    def test_vista_previa_no_guarda_nada(self):
+        respuesta = self.subir([self.ENCABEZADO, ['Café', 10, 3000, 5000]])
+        self.assertContains(respuesta, 'Confirmar carga')
+        self.assertContains(respuesta, 'Aún no se ha guardado nada')
+        self.assertEqual(Producto.objects.count(), 0)
+
+    def test_confirmar_crea_productos_nuevos(self):
+        self.subir([self.ENCABEZADO, ['Café', 10, 3000, 5000], ['Té', 4, 800, 1500]])
+        respuesta = self.client.post(reverse('excel'), {'accion': 'confirmar', 'hoja': '0'}, follow=True)
+        self.assertContains(respuesta, 'Carga lista')
+        cafe = Producto.objects.get(dueno=self.pyme, nombre='Café')
+        self.assertEqual((cafe.cantidad_actual, cafe.precio_costo, cafe.precio_venta), (10, 3000, 5000))
+        self.assertEqual(Producto.objects.filter(dueno=self.pyme).count(), 2)
+
+    def test_confirmar_suma_stock_y_actualiza_precios_de_existentes(self):
+        Producto.objects.create(dueno=self.pyme, nombre='CAFÉ', cantidad_actual=5, precio_costo=100, precio_venta=200)
+        self.subir([self.ENCABEZADO, ['café', 10, 3000, 5000]])
+        self.client.post(reverse('excel'), {'accion': 'confirmar', 'hoja': '0'})
+        self.assertEqual(Producto.objects.count(), 1)
+        p = Producto.objects.get()
+        self.assertEqual((p.cantidad_actual, p.precio_costo, p.precio_venta), (15, 3000, 5000))
+
+    def test_no_toca_productos_de_otra_pyme(self):
+        otra = crear_pyme(correo='b@b.cl', nombre='Pyme B')
+        ajeno = Producto.objects.create(dueno=otra, nombre='Café', cantidad_actual=7, precio_costo=1, precio_venta=2)
+        self.subir([self.ENCABEZADO, ['Café', 10, 3000, 5000]])
+        self.client.post(reverse('excel'), {'accion': 'confirmar', 'hoja': '0'})
+        ajeno.refresh_from_db()
+        self.assertEqual(ajeno.cantidad_actual, 7)
+        self.assertEqual(Producto.objects.filter(dueno=self.pyme, nombre='Café').count(), 1)
+
+    def test_confirmar_sin_vista_previa_no_hace_nada(self):
+        respuesta = self.client.post(reverse('excel'), {'accion': 'confirmar', 'hoja': '0'}, follow=True)
+        self.assertContains(respuesta, 'La vista previa venció')
+        self.assertEqual(Producto.objects.count(), 0)
+
+    def test_confirmar_dos_veces_no_duplica_la_carga(self):
+        self.subir([self.ENCABEZADO, ['Café', 10, 3000, 5000]])
+        self.client.post(reverse('excel'), {'accion': 'confirmar', 'hoja': '0'})
+        self.client.post(reverse('excel'), {'accion': 'confirmar', 'hoja': '0'})
+        self.assertEqual(Producto.objects.get().cantidad_actual, 10)
+
+    def test_filas_invalidas_se_informan_y_no_se_cargan(self):
+        respuesta = self.subir([self.ENCABEZADO, ['Bueno', 1, 100, 200], ['', 1, 100, 200], ['Malo', 'x', 1, 1]])
+        self.assertContains(respuesta, 'Fila 3')
+        self.assertContains(respuesta, 'Fila 4')
+        self.client.post(reverse('excel'), {'accion': 'confirmar', 'hoja': '0'})
+        self.assertEqual(list(Producto.objects.values_list('nombre', flat=True)), ['Bueno'])
+
+    def test_hoja_sin_las_columnas_pedidas_no_ofrece_cargar(self):
+        respuesta = self.subir([['Algo', 'Otro'], ['x', 1]])
+        self.assertContains(respuesta, 'Faltan estas columnas')
+        self.assertNotContains(respuesta, 'Confirmar carga')
+
+    def test_filas_repetidas_en_el_archivo_se_suman(self):
+        self.subir([self.ENCABEZADO, ['Café', 10, 3000, 5000], ['café', 5, 3100, 5200]])
+        self.client.post(reverse('excel'), {'accion': 'confirmar', 'hoja': '0'})
+        p = Producto.objects.get()
+        self.assertEqual((p.cantidad_actual, p.precio_costo, p.precio_venta), (15, 3100, 5200))
+
+    def test_confirmar_requiere_sesion(self):
+        respuesta = Client().post(reverse('excel'), {'accion': 'confirmar', 'hoja': '0'})
+        self.assertEqual(respuesta.status_code, 302)

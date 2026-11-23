@@ -14,6 +14,7 @@ urlpatterns = [
     path('ganancias/', views.ganancias, name='ganancias'),
     path('tendencias/', views.tendencias, name='tendencias'),
     path('perfil/', views.perfil, name='perfil'),
+    path('excel/', views.lector_excel_vista, name='excel'),
     path('crear-producto/', views.crear_producto, name='crear_producto'),
     path('editar-producto/<int:producto_id>/', views.editar_producto, name='editar_producto'),
     path('eliminar-producto/<int:producto_id>/', views.eliminar_producto, name='eliminar_producto'),
